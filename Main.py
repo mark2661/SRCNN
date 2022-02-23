@@ -1,97 +1,71 @@
-import h5py
+import copy
 import torch
-import os
 import time
-import torch.nn as nn
-from matplotlib import pyplot as plt
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader
-from Dataset import SRCNNDataset
-from Model import SRCNN
 import Train
-
-ROOT_DIRECTORY = "/content/drive/MyDrive/FYP"
-
-
-def load_data(path):
-    with h5py.File(path)as data_file:
-        # read in training data and training labels and cast data to 32 bit floats
-        training_data = data_file['data'][:].astype('float32')
-        training_label = data_file['label'][:].astype('float32')
-
-    x_train, x_val, y_train, y_val = train_test_split(training_data, training_label,
-                                                      test_size=0.25)  # test_size=0.25 means 25% of the samples will be used for the validation set
-    return x_train, x_val, y_train, y_val
+import argparse
+import os
+import torch.nn as nn
+from torch.utils.data import DataLoader
+from Dataset import TrainingDataset, ValidationDataset
+from Model import SRCNN
+from utils import plot_training_results
 
 
-def plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr):
-    # loss plots
-    plt.figure(figsize=(10, 7))
-    plt.plot(train_loss, color='orange', label='train loss')
-    plt.plot(val_loss, color='red', label='validataion loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
-    # plt.savefig('../outputs/loss.png')
-    #plt.savefig(os.path.join(ROOT_DIRECTORY, "outputs", "loss.png"))
-    plt.show()
-    # psnr plots
-    plt.figure(figsize=(10, 7))
-    plt.plot(train_psnr, color='green', label='train PSNR dB')
-    plt.plot(val_psnr, color='blue', label='validataion PSNR dB')
-    plt.xlabel('Epochs')
-    plt.ylabel('PSNR (dB)')
-    plt.legend()
-    #plt.savefig('../outputs/psnr.png')
-    #plt.savefig(os.path.join(ROOT_DIRECTORY, "outputs", "psnr.png"))
-    plt.show()
-    # save the model to disk
-    print('Saving model...')
-    #torch.save(model.state_dict(), '../outputs/model.pth')
-    #os.path.join(ROOT_DIRECTORY, "outputs", "loss.png")
-    torch.save(model.state_dict(), os.path.join(os.curdir, "outputs",'model.pth'))
-
-
-def main():
-    # Model parameters
-    batch_size = 64
-    epochs = 100
-    lr = pow(10, -4)
-    DATA_PATH = os.path.join(os.curdir,'TrainingData', 'crop_train.h5') #need to enter the folder containing the .h5 file
-
+def main(training_data_path, validation_data_path, learning_rate, batch_size, number_of_epochs):
+    # set the training device
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    x_train, x_val, y_train, y_val = load_data(DATA_PATH)
+    # create the training and validation dataset objects for the dataloader
+    training_dataset = TrainingDataset(training_data_path)
+    validation_dataset = ValidationDataset(validation_data_path)
 
-    training_dataset = SRCNNDataset(images=x_train, labels=y_train)
-    validation_dataset = SRCNNDataset(images=x_val, labels=y_val)
+    # define the dataloaders
+    training_loader = DataLoader(dataset=training_dataset,
+                                 batch_size=batch_size,
+                                 shuffle=True,
+                                 num_workers=8,
+                                 pin_memory=True,
+                                 drop_last=True)
+    validation_loader = DataLoader(dataset=validation_dataset, batch_size=1)
 
-    training_loader = DataLoader(training_dataset, batch_size=batch_size)
-    validation_loader = DataLoader(validation_dataset, batch_size=batch_size)
-
+    # create SRCNN model instance and pass to gpu for training
     model = SRCNN()
     model.to(DEVICE)
-    optimiser = torch.optim.SGD(model.parameters(), lr=lr)
+
+    # define the SRCNN model parameters
+    optimiser = torch.optim.Adam([
+        {'params': model.l1.parameters()},
+        {'params': model.l2.parameters()},
+        {'params': model.l3.parameters(), 'lr': learning_rate * 0.1}
+    ], lr=learning_rate)
     criterion = nn.MSELoss()
 
+    # arrays to store statistics from each training loop
     train_loss, val_loss = [], []
     train_psnr, val_psnr = [], []
+    best_psnr = 0
+    best_weights = copy.deepcopy(model.state_dict())
+    # note the start time for use calculating the final running time of the model training
     start = time.time()
-    for epoch in range(epochs):
-        print(f"Epoch {epoch + 1} of {epochs}")
+
+    # main training and validation loop
+    for epoch in range(number_of_epochs):
+        print(f"Epoch {epoch + 1} of {number_of_epochs}")
         train_epoch_loss, train_epoch_psnr = Train.train(model,
                                                          training_loader,
                                                          device=DEVICE,
                                                          criterion=criterion,
                                                          optimiser=optimiser,
-                                                         iterations_per_epoch=int(len(training_dataset)/training_loader.batch_size))
+                                                         iterations_per_epoch=int(
+                                                             len(training_dataset) // training_loader.batch_size))
         val_epoch_loss, val_epoch_psnr = Train.validate(model,
                                                         validation_loader,
                                                         device=DEVICE,
                                                         criterion=criterion,
-                                                        iterations_per_epoch=int(len(validation_dataset)/validation_loader.batch_size))
+                                                        iterations_per_epoch=int(
+                                                            len(validation_dataset) // validation_loader.batch_size))
 
-        print(f"Train PSNR: {train_epoch_psnr:.3f}")
+        print(f"\nTrain PSNR: {train_epoch_psnr:.3f}")
         print(f"Val PSNR: {val_epoch_psnr:.3f}")
 
         train_loss.append(train_epoch_loss)
@@ -99,9 +73,34 @@ def main():
         val_loss.append(val_epoch_loss)
         val_psnr.append(val_epoch_psnr)
 
+        if val_epoch_psnr > best_psnr:
+            best_psnr = val_epoch_psnr
+            best_weights = copy.deepcopy(model.state_dict())
+
     end = time.time()
-    print(f"Finished training in: {((end-start)/60):.3f} minutes")
+    print(f"Finished training in: {((end - start) / 60):.3f} minutes")
+
+    # save the model to disk
+    print('Saving model...')
+    if os.path.isfile(os.path.join(os.curdir, "outputs", 'model.pth')):
+        # if file exists delete it so we can save a new state dict with the same name
+        os.remove(os.path.join(os.curdir, "outputs", 'model.pth'))
+    torch.save(best_weights, os.path.join(os.curdir, "outputs", 'model.pth'))
+
+    # display Results
     plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr)
 
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--training-data', type=str, required=True)
+    parser.add_argument('--validation-data', type=str, required=True)
+    parser.add_argument('--lr', type=float, default=pow(10, -4))
+    parser.add_argument('--batch-size', type=int, default=16)
+    parser.add_argument('--epochs', type=int, default=100)
+    args = parser.parse_args()
+    main(training_data_path=args.training_data,
+         validation_data_path=args.validation_data,
+         learning_rate=args.lr,
+         batch_size=args.batch_size,
+         number_of_epochs=args.epochs)
