@@ -23,7 +23,7 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
     training_loader = DataLoader(dataset=training_dataset,
                                  batch_size=batch_size,
                                  shuffle=True,
-                                 num_workers=8,
+                                 num_workers=4,
                                  pin_memory=True,
                                  drop_last=True)
     validation_loader = DataLoader(dataset=validation_dataset, batch_size=1)
@@ -45,7 +45,7 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
     train_psnr, val_psnr = [], []
     best_psnr = 0
     best_weights = copy.deepcopy(model.state_dict())
-    # note the start time for use calculating the final running time of the model training
+    # note the start time for use calculating the final running time of the model training loop
     start = time.time()
 
     # main training and validation loop
@@ -68,11 +68,13 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
         print(f"\nTrain PSNR: {train_epoch_psnr:.3f}")
         print(f"Val PSNR: {val_epoch_psnr:.3f}")
 
+        # store the epoch training and validation average loss and average PSNR for data plotting
         train_loss.append(train_epoch_loss)
         train_psnr.append(train_epoch_psnr)
         val_loss.append(val_epoch_loss)
         val_psnr.append(val_epoch_psnr)
 
+        # save the best state_dict
         if val_epoch_psnr > best_psnr:
             best_psnr = val_epoch_psnr
             best_weights = copy.deepcopy(model.state_dict())
@@ -80,7 +82,7 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
     end = time.time()
     print(f"Finished training in: {((end - start) / 60):.3f} minutes")
 
-    # save the model to disk
+    # save the best model state dict to disk
     print('Saving model...')
     if os.path.isfile(os.path.join(os.curdir, "outputs", 'model.pth')):
         # if file exists delete it so we can save a new state dict with the same name
