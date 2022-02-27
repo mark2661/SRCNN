@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from Dataset import TrainingDataset, ValidationDataset
 from Model import SRCNN
 from utils import plot_training_results
+from piq import ssim, SSIMLoss, MultiScaleSSIMLoss
 
 
 def main(training_data_path, validation_data_path, learning_rate, batch_size, number_of_epochs):
@@ -39,7 +40,9 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
         {'params': model.l3.parameters(), 'lr': learning_rate * 0.1}
     ], lr=learning_rate)
     #criterion = nn.MSELoss()
-    criterion = nn.L1Loss()
+    #criterion = nn.L1Loss()
+    #criterion = SSIMLoss(data_range=1.)
+    criterion = MultiScaleSSIMLoss(kernel_size=3)
 
     # arrays to store statistics from each training loop
     train_loss, val_loss = [], []
@@ -88,7 +91,8 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
     if os.path.isfile(os.path.join(os.curdir, "outputs", 'model.pth')):
         # if file exists delete it so we can save a new state dict with the same name
         os.remove(os.path.join(os.curdir, "outputs", 'model.pth'))
-    torch.save(best_weights, os.path.join(os.curdir, "outputs", 'model.pth'))
+    #torch.save(best_weights, os.path.join(os.curdir, "outputs", 'model.pth'))
+    torch.save(model.state_dict(), os.path.join(os.curdir, "outputs", 'model.pth'))
 
     # display Results
     plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr)

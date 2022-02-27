@@ -16,7 +16,8 @@ def train(model, dataloader, device, criterion, optimiser, iterations_per_epoch)
         label = data[1].to(device)
 
         # forward pass
-        outputs = model(image_data)
+        #outputs = model(image_data)
+        outputs = model(image_data).clamp(0.0, 1.0)
         loss = criterion(outputs, label)
 
         # backpropagate and optimise

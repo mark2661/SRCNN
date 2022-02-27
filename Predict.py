@@ -101,8 +101,8 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
 
 
 def main(test_set_path, model_weights_path):
-    test_image_path = os.path.join(test_set_path, 'bird_GT.bmp')
-    #test_image_path = os.path.join(test_set_path, 'butterfly_GT.bmp')
+    #test_image_path = os.path.join(test_set_path, 'bird_GT.bmp')
+    test_image_path = os.path.join(test_set_path, 'butterfly_GT.bmp')
     display_predicted_results(*predict_srcnn(test_image_path, model_weights_path))
 
 
