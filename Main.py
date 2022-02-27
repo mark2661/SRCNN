@@ -38,7 +38,8 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
         {'params': model.l2.parameters()},
         {'params': model.l3.parameters(), 'lr': learning_rate * 0.1}
     ], lr=learning_rate)
-    criterion = nn.MSELoss()
+    #criterion = nn.MSELoss()
+    criterion = nn.L1Loss()
 
     # arrays to store statistics from each training loop
     train_loss, val_loss = [], []
