@@ -2,6 +2,7 @@ import math as maths
 import numpy as np
 import torch
 import cv2
+import os
 from matplotlib import pyplot as plt
 
 
@@ -46,11 +47,11 @@ def artificially_degrade_image(image, factor):
     new_width = w // factor
 
     # downscale the image
-    #image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
+    # image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
     image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
 
     # upscale the image
-    #image = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
+    # image = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
     image = cv2.resize(image, (w, h), interpolation=cv2.INTER_CUBIC)
     image = cv2.GaussianBlur(image, (5, 5), cv2.BORDER_DEFAULT)
 
@@ -99,21 +100,20 @@ def plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr):
     # plt.savefig(os.path.join(ROOT_DIRECTORY, "outputs", "psnr.png"))
     plt.show()
 
-def save_results_plot(val_loss, val_psnr, output_dir):
+
+def save_results_plot(val_loss, val_psnr, tick_spacing, output_dir, file_name):
     # loss plot
     plt.figure(figsize=(10, 7))
     plt.plot(val_loss, color='red', label='validation loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.xticks([range(1, 1001, 100)])
-    plt.savefig('{}.png'.format(output_dir))
+    plt.xticks(list(range(1, 1001, tick_spacing)))
+    plt.savefig(os.path.join(output_dir, '{}_loss.png'.format(file_name)))
 
     # psnr plot
     plt.figure(figsize=(10, 7))
     plt.plot(val_psnr, color='blue', label='validataion PSNR dB')
     plt.xlabel('Epochs')
     plt.ylabel('PSNR (dB)')
-    plt.xticks([range(1, 1001, 100)])
-    plt.savefig('{}.png'.format(output_dir))
-
-
+    plt.xticks(list(range(1, 1001, tick_spacing)))
+    plt.savefig(os.path.join(output_dir, '{}_psnr.png'.format(file_name)))
