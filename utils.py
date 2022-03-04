@@ -98,3 +98,22 @@ def plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr):
     # plt.savefig('../outputs/psnr.png')
     # plt.savefig(os.path.join(ROOT_DIRECTORY, "outputs", "psnr.png"))
     plt.show()
+
+def save_results_plot(val_loss, val_psnr, output_dir):
+    # loss plot
+    plt.figure(figsize=(10, 7))
+    plt.plot(val_loss, color='red', label='validation loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.xticks([range(1, 1001, 100)])
+    plt.savefig('{}.png'.format(output_dir))
+
+    # psnr plot
+    plt.figure(figsize=(10, 7))
+    plt.plot(val_psnr, color='blue', label='validataion PSNR dB')
+    plt.xlabel('Epochs')
+    plt.ylabel('PSNR (dB)')
+    plt.xticks([range(1, 1001, 100)])
+    plt.savefig('{}.png'.format(output_dir))
+
+

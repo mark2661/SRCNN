@@ -4,15 +4,22 @@ import time
 import Train
 import argparse
 import os
+import pickle
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from Dataset import TrainingDataset, ValidationDataset
 from Model import SRCNN
-from utils import plot_training_results
+from utils import plot_training_results, save_results_plot
 from piq import ssim, SSIMLoss, MultiScaleSSIMLoss
+from pathlib import Path
 
 
-def main(training_data_path, validation_data_path, learning_rate, batch_size, number_of_epochs):
+def main(training_data_path, validation_data_path, learning_rate,
+         batch_size, number_of_epochs, output_dir, model_num=1):
+
+    # create an output dir for this model
+    Path(os.path.join(output_dir, 'model{}'.format(model_num))).mkdir(parents=True, exist_ok=True)
+
     # set the training device
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -39,10 +46,11 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
         {'params': model.l2.parameters()},
         {'params': model.l3.parameters(), 'lr': learning_rate * 0.1}
     ], lr=learning_rate)
-    #criterion = nn.MSELoss()
+
+    criterion = nn.MSELoss()
     #criterion = nn.L1Loss()
     #criterion = SSIMLoss(data_range=1.)
-    criterion = MultiScaleSSIMLoss(kernel_size=3)
+    #criterion = MultiScaleSSIMLoss(kernel_size=3)
 
     # arrays to store statistics from each training loop
     train_loss, val_loss = [], []
@@ -78,24 +86,46 @@ def main(training_data_path, validation_data_path, learning_rate, batch_size, nu
         val_loss.append(val_epoch_loss)
         val_psnr.append(val_epoch_psnr)
 
-        # save the best state_dict
-        if val_epoch_psnr > best_psnr:
-            best_psnr = val_epoch_psnr
-            best_weights = copy.deepcopy(model.state_dict())
+        # # save the best state_dict
+        # if val_epoch_psnr > best_psnr:
+        #     best_psnr = val_epoch_psnr
+        #     best_weights = copy.deepcopy(model.state_dict())
+
+        # save weights every 250 Epochs
+        if epoch % 250 == 0:
+            torch.save(model.state_dict(), os.path.join(output_dir, 'model{}'.format(model_num),
+                                                        'model{}_{}epochs.pth'.format(model_num, epoch)))
+
 
     end = time.time()
     print(f"Finished training in: {((end - start) / 60):.3f} minutes")
 
-    # save the best model state dict to disk
-    print('Saving model...')
-    if os.path.isfile(os.path.join(os.curdir, "outputs", 'model.pth')):
-        # if file exists delete it so we can save a new state dict with the same name
-        os.remove(os.path.join(os.curdir, "outputs", 'model.pth'))
-    #torch.save(best_weights, os.path.join(os.curdir, "outputs", 'model.pth'))
-    torch.save(model.state_dict(), os.path.join(os.curdir, "outputs", 'model.pth'))
+    # # save the best model state dict to disk
+    # print('Saving model...')
+    # if os.path.isfile(os.path.join(os.curdir, "outputs", 'model.pth')):
+    #     # if file exists delete it so we can save a new state dict with the same name
+    #     os.remove(os.path.join(os.curdir, "outputs", 'model.pth'))
+    # #torch.save(best_weights, os.path.join(os.curdir, "outputs", 'model.pth'))
+    # torch.save(model.state_dict(), os.path.join(os.curdir, "outputs", 'model.pth'))
 
-    # display Results
-    plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr)
+    # should maybe wrap in try catch statement ?
+    print('Saving model...')
+    # save state dict
+    torch.save(model.state_dict(), os.path.join(output_dir, 'model{}'.format(model_num),
+                                                'model{}_{}epochs.pth'.format(model_num, number_of_epochs)))
+    # save list of epoch validation PSNR (using pickeling)
+    with open(os.path.join(output_dir, 'model{}'.format(model_num), val_psnr.pickle), 'wb') as f:
+        pickle.dump(val_psnr, f)
+    # save list of epoch validation loss (using pickeling)
+    with open(os.path.join(output_dir, 'model{}'.format(model_num), val_loss.pickle), 'wb') as f:
+        pickle.dump(val_loss, f)
+
+    # save the plot of validation loss and PSNR (x-axis equals number of epochs, every 50 epochs)
+    save_results_plot(val_loss=val_loss, val_psnr=val_psnr,
+                      output_dir=os.path.join(output_dir, 'model{}'.format(model_num)))
+
+    # # display Results
+    # plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr)
 
 
 if __name__ == "__main__":
@@ -105,9 +135,13 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=pow(10, -4))
     parser.add_argument('--batch-size', type=int, default=16)
     parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--output-dir', type=str)
+    parser.add_argument('--model-num', type=int, default=1)
     args = parser.parse_args()
     main(training_data_path=args.training_data,
          validation_data_path=args.validation_data,
          learning_rate=args.lr,
          batch_size=args.batch_size,
-         number_of_epochs=args.epochs)
+         number_of_epochs=args.epochs,
+         output_dir=args.output_dir,
+         model_num=args.model_num)
