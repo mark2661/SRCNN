@@ -16,7 +16,6 @@ from pathlib import Path
 
 def main(training_data_path, validation_data_path, learning_rate,
          batch_size, number_of_epochs, output_dir, model_num=1):
-
     # create an output dir for this model
     Path(os.path.join(output_dir, 'model{}'.format(model_num))).mkdir(parents=True, exist_ok=True)
 
@@ -48,9 +47,9 @@ def main(training_data_path, validation_data_path, learning_rate,
     ], lr=learning_rate)
 
     criterion = nn.MSELoss()
-    #criterion = nn.L1Loss()
-    #criterion = SSIMLoss(data_range=1.)
-    #criterion = MultiScaleSSIMLoss(kernel_size=3)
+    # criterion = nn.L1Loss()
+    # criterion = SSIMLoss(data_range=1.)
+    # criterion = MultiScaleSSIMLoss(kernel_size=3)
 
     # arrays to store statistics from each training loop
     train_loss, val_loss = [], []
@@ -91,20 +90,10 @@ def main(training_data_path, validation_data_path, learning_rate,
         #     best_psnr = val_epoch_psnr
         #     best_weights = copy.deepcopy(model.state_dict())
 
-        # save weights, validation_loss_history and validation_psnr_history  every 250 Epochs
+        # save weights, validation_loss_history, and validation_psnr_history every 250 Epochs
         if epoch > 0 and epoch % 250 == 0:
-            # save state dict
-            torch.save(model.state_dict(), os.path.join(output_dir, 'model{}'.format(model_num),
-                                                        'model{}_{}epochs.pth'.format(model_num, epoch)))
-            # save list of epoch validation PSNR (using pickle to serialise list)
-            with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_psnr_{}.pickle'.format(epoch)),
-                      'wb') as f:
-                pickle.dump(val_psnr, f)
-            # save list of epoch validation loss ((using pickle to serialise list)
-            with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_loss_{}.pickle'.format(epoch)), 'wb')\
-                    as f:
-                pickle.dump(val_loss, f)
-
+            save_current_training_state(model=model, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
+                                        model_num=model_num, epoch=epoch)
 
     end = time.time()
     print(f"Finished training in: {((end - start) / 60):.3f} minutes")
@@ -119,23 +108,29 @@ def main(training_data_path, validation_data_path, learning_rate,
 
     # should maybe wrap in try catch statement ?
     print('Saving model...')
-    # save state dict
-    torch.save(model.state_dict(), os.path.join(output_dir, 'model{}'.format(model_num),
-                                                'model{}_{}epochs.pth'.format(model_num, number_of_epochs)))
-    # save list of epoch validation PSNR (using pickle to serialise list)
-    with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_psnr.pickle'), 'wb') as f:
-        pickle.dump(val_psnr, f)
-    # save list of epoch validation loss ((using pickle to serialise list)
-    with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_loss.pickle'), 'wb') as f:
-        pickle.dump(val_loss, f)
+    save_current_training_state(model=model, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
+                                model_num=model_num, epoch_num=number_of_epochs)
 
     # save the plot of validation loss and PSNR (x-axis equals number of epochs, every 50 epochs)
     save_results_plot(val_loss=val_loss, val_psnr=val_psnr, tick_spacing=49,
                       output_dir=os.path.join(output_dir, 'model{}'.format(model_num)),
-                      file_name='{}.png'.format(model_num))
+                      file_name='model{}.png'.format(model_num))
 
     # # display Results
     # plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr)
+
+
+def save_current_training_state(model, val_psnr, val_loss, output_dir, model_num, epoch_num):
+    # save model state dict
+    torch.save(model.state_dict(), os.path.join(output_dir, 'model{}'.format(model_num),
+                                                'model{}_{}epochs.pth'.format(model_num, epoch_num)))
+    # save list of epoch validation PSNR (using pickle to serialise list)
+    with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_psnr_{}.pickle'.format(epoch_num)), 'wb') as f:
+        pickle.dump(val_psnr, f)
+    # save list of epoch validation loss ((using pickle to serialise list)
+    with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_loss_{}.pickle'.format(epoch_num)), 'wb') as f:
+        pickle.dump(val_loss, f)
+
 
 
 if __name__ == "__main__":
