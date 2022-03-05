@@ -6,6 +6,7 @@ import argparse
 import os
 import pickle
 import torch.nn as nn
+import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from Dataset import TrainingDataset, ValidationDataset
 from Model import SRCNN
@@ -22,8 +23,14 @@ def main(training_data_path, validation_data_path, learning_rate,
     # set the training device
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+    # define a custom transform for the training dataset
+    transform = transforms.Compose([
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(90)
+    ])
+
     # create the training and validation dataset objects for the dataloader
-    training_dataset = TrainingDataset(training_data_path)
+    training_dataset = TrainingDataset(training_data_path, transform)
     validation_dataset = ValidationDataset(validation_data_path)
 
     # define the dataloaders
@@ -130,7 +137,6 @@ def save_current_training_state(model, val_psnr, val_loss, output_dir, model_num
     # save list of epoch validation loss ((using pickle to serialise list)
     with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_loss_{}.pickle'.format(epoch_num)), 'wb') as f:
         pickle.dump(val_loss, f)
-
 
 
 if __name__ == "__main__":
