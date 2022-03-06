@@ -101,13 +101,13 @@ def plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr):
     plt.show()
 
 
-def save_results_plot(val_loss, val_psnr, tick_spacing, output_dir, file_name):
+def save_results_plot(val_loss, val_psnr, num_epochs, tick_spacing, output_dir, file_name):
     # loss plot
     plt.figure(figsize=(10, 7))
     plt.plot(val_loss, color='red', label='validation loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.xticks(list(range(1, 1001, tick_spacing)))
+    plt.xticks(list(range(0, num_epochs+1, tick_spacing)))
     plt.savefig(os.path.join(output_dir, '{}_loss.png'.format(file_name)))
 
     # psnr plot
@@ -115,5 +115,5 @@ def save_results_plot(val_loss, val_psnr, tick_spacing, output_dir, file_name):
     plt.plot(val_psnr, color='blue', label='validataion PSNR dB')
     plt.xlabel('Epochs')
     plt.ylabel('PSNR (dB)')
-    plt.xticks(list(range(1, 1001, tick_spacing)))
+    plt.xticks(list(range(0, num_epochs+1, tick_spacing)))
     plt.savefig(os.path.join(output_dir, '{}_psnr.png'.format(file_name)))
