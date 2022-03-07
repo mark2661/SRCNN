@@ -30,7 +30,7 @@ def main(training_data_path, validation_data_path, learning_rate,
     ])
 
     # create the training and validation dataset objects for the dataloader
-    training_dataset = TrainingDataset(training_data_path, transform)
+    training_dataset = TrainingDataset(training_data_path)
     validation_dataset = ValidationDataset(validation_data_path)
 
     # define the dataloaders
@@ -100,7 +100,7 @@ def main(training_data_path, validation_data_path, learning_rate,
         # save weights, validation_loss_history, and validation_psnr_history every 250 Epochs
         if epoch > 0 and epoch % 250 == 0:
             save_current_training_state(model=model, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
-                                        model_num=model_num, epoch=epoch)
+                                        model_num=model_num, epoch_num=epoch)
 
     end = time.time()
     print(f"Finished training in: {((end - start) / 60):.3f} minutes")
