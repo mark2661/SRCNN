@@ -47,13 +47,13 @@ def artificially_degrade_image(image, factor):
     new_width = w // factor
 
     # downscale the image
-    # image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
+    #image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
     image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
 
     # upscale the image
-    # image = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
+    #image = cv2.resize(image, (w, h), interpolation=cv2.INTER_LINEAR)
     image = cv2.resize(image, (w, h), interpolation=cv2.INTER_CUBIC)
-    #image = cv2.GaussianBlur(image, (5, 5), cv2.BORDER_DEFAULT)
+    image = cv2.GaussianBlur(image, (5, 5), cv2.BORDER_DEFAULT)
 
     return image
 

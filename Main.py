@@ -121,7 +121,7 @@ def main(training_data_path, validation_data_path, learning_rate,
     # save the plot of validation loss and PSNR (x-axis equals number of epochs, every 50 epochs)
     save_results_plot(val_loss=val_loss, val_psnr=val_psnr, num_epochs=number_of_epochs, tick_spacing=50,
                       output_dir=os.path.join(output_dir, 'model{}'.format(model_num)),
-                      file_name='model{}.png'.format(model_num))
+                      file_name='model{}'.format(model_num))
 
     # # display Results
     # plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr)
