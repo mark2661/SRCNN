@@ -31,7 +31,6 @@ python Main.py --training-data #path to training set .h5 file
 python Test.py --test-set-path #comma seperated list of file paths to the desired test sets
                --model-weights-path #path to the trained model weights
 ```
-
 ### Results
 
 ### Prediction
