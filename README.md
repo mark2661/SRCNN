@@ -13,10 +13,10 @@ python main.py --training-data #path to training set .h5 file
 
 ## Test
 ### Test sets
-* [Set5] (http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html)
-* [Set14] (http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html)
-* [BSDS] (https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/)
-* [Urban100] (https://paperswithcode.com/dataset/urban100)
+* [Set5](http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html)
+* [Set14](http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html)
+* [BSDS](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/)
+* [Urban100](https://paperswithcode.com/dataset/urban100)
 
 
 ## Prediction
