@@ -25,6 +25,7 @@ python Test.py --test-set-path #comma seperated list of file paths to the desire
 ## Results
 
 ## Prediction
-```python predict.py --image-path #path to the low res image
-                     --model-weights-path #path to the trained model weights
+```python 
+python predict.py --image-path #path to the low res image
+                  --model-weights-path #path to the trained model weights
 ```
