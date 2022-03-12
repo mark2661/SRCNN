@@ -37,3 +37,5 @@ python Test.py --test-set-path #comma seperated list of file paths to the desire
 python Predict.py --image-path #path to the low res image
                   --model-weights-path #path to the trained model weights
 ```
+#### Example Output
+![alt text](https://github.com/mark2661/SRCNN/blob/main/images/SRCNN_model1_butterfly_result.png)
