@@ -16,7 +16,7 @@ python Main.py --training-data #path to training set .h5 file
                --model-num #unique id number the the model (1 default) (optional)
 ```
 #### Output
-
+![alt text](https://github.com/mark2661/SRCNN/blob/main/images/results_1000_cropped.png)
 ### Testing
 #### Test sets
 * [Set5](http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html)
