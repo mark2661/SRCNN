@@ -1,6 +1,11 @@
 # SRCNN
 Implementation of the image super resolution convolutional neural network proposed in [Image Super-Resolution Using Deep Convolutional Networks](https://arxiv.org/abs/1501.00092 "Image Super-Resolution Using Deep Convolutional Networks").
-## Training
+## What I Learned
+* Creating data processing pipelines for large datasets using [OpenCV](https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html), [NumPy](https://numpy.org/), and [Scikit-learn](https://scikit-learn.org/stable/)
+* Implementing simple neural networks in PyTorch
+* Serialising data using [pickle](https://docs.python.org/3/library/pickle.html)
+## Usage
+### Training
 ```python
 python Main.py --training-data #path to training set .h5 file
                --validation-data #path ro validation set .h5 file
@@ -11,8 +16,8 @@ python Main.py --training-data #path to training set .h5 file
                --model-num #unique id number the the model (1 default) (optional)
 ```
 
-## Testing
-### Test sets
+### Testing
+#### Test sets
 * [Set5](http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html)
 * [Set14](http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html)
 * [BSDS](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/)
@@ -22,9 +27,9 @@ python Test.py --test-set-path #comma seperated list of file paths to the desire
                --model-weights-path #path to the trained model weights
 ```
 
-## Results
+### Results
 
-## Prediction
+### Prediction
 ```python 
 python Predict.py --image-path #path to the low res image
                   --model-weights-path #path to the trained model weights
