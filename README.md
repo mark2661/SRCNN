@@ -15,6 +15,7 @@ python Main.py --training-data #path to training set .h5 file
                --output-dir #path to the output directory
                --model-num #unique id number the the model (1 default) (optional)
 ```
+#### Output
 
 ### Testing
 #### Test sets
