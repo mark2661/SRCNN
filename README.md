@@ -10,3 +10,8 @@ python main.py --training-data #path to training set .h5 file
                --output-dir #path to the output directory
                --model-num #unique id number the the model (1 default) (optional)
 ```
+## Prediction
+```python
+predict.py --image-path #path to the low res image
+           --model-weights-path #path to the trained model weights
+```
