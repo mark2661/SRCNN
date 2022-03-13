@@ -19,9 +19,10 @@ python Main.py --training-data #path to training set .h5 file
 ```
 #### Example Output
 ![alt text](https://github.com/mark2661/SRCNN/blob/main/images/results_1000_cropped.png)
-
-|![alt text](https://github.com/mark2661/SRCNN/blob/main/images/model1.png_loss.png)|![alt text](https://github.com/mark2661/SRCNN/blob/main/images/model1.png_psnr.png)|
-
+|  |  |
+| ------------- | ------------- |
+| ![alt text](https://github.com/mark2661/SRCNN/blob/main/images/model1.png_loss.png) | ![alt text](https://github.com/mark2661/SRCNN/blob/main/images/model1.png_psnr.png)  |
+|  | |
 ### Testing
 #### Test sets
 * [Set5](http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html)
