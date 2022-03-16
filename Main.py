@@ -92,30 +92,22 @@ def main(training_data_path, validation_data_path, learning_rate,
         val_loss.append(val_epoch_loss)
         val_psnr.append(val_epoch_psnr)
 
-        # # save the best state_dict
-        # if val_epoch_psnr > best_psnr:
-        #     best_psnr = val_epoch_psnr
-        #     best_weights = copy.deepcopy(model.state_dict())
+        # save the best state_dict
+        if val_epoch_psnr > best_psnr:
+            best_psnr = val_epoch_psnr
+            best_weights = copy.deepcopy(model.state_dict())
 
         # save weights, validation_loss_history, and validation_psnr_history every 250 Epochs
         if epoch > 0 and epoch % 250 == 0:
-            save_current_training_state(model=model, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
+            save_current_training_state(best_weight=best_weights, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
                                         model_num=model_num, epoch_num=epoch)
 
     end = time.time()
     print(f"Finished training in: {((end - start) / 60):.3f} minutes")
 
-    # # save the best model state dict to disk
-    # print('Saving model...')
-    # if os.path.isfile(os.path.join(os.curdir, "outputs", 'model.pth')):
-    #     # if file exists delete it so we can save a new state dict with the same name
-    #     os.remove(os.path.join(os.curdir, "outputs", 'model.pth'))
-    # #torch.save(best_weights, os.path.join(os.curdir, "outputs", 'model.pth'))
-    # torch.save(model.state_dict(), os.path.join(os.curdir, "outputs", 'model.pth'))
-
     # should maybe wrap in try catch statement ?
     print('Saving model...')
-    save_current_training_state(model=model, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
+    save_current_training_state(best_weight=best_weights, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
                                 model_num=model_num, epoch_num=number_of_epochs)
 
     # save the plot of validation loss and PSNR (x-axis equals number of epochs, every 50 epochs)
@@ -127,10 +119,10 @@ def main(training_data_path, validation_data_path, learning_rate,
     # plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr)
 
 
-def save_current_training_state(model, val_psnr, val_loss, output_dir, model_num, epoch_num):
+def save_current_training_state(best_weight, val_psnr, val_loss, output_dir, model_num, epoch_num):
     # save model state dict
-    torch.save(model.state_dict(), os.path.join(output_dir, 'model{}'.format(model_num),
-                                                'model{}_{}epochs.pth'.format(model_num, epoch_num)))
+    torch.save(best_weight, os.path.join(output_dir, 'model{}'.format(model_num),
+                                         'model{}_{}epochs.pth'.format(model_num, epoch_num)))
     # save list of epoch validation PSNR (using pickle to serialise list)
     with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_psnr_{}.pickle'.format(epoch_num)), 'wb') as f:
         pickle.dump(val_psnr, f)
