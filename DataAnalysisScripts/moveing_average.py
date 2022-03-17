@@ -8,7 +8,7 @@ import argparse
 
 
 def plot_loss_and_moving_average(df):
-    df.plot.line(x='Epoch', y=['Loss', 'Moving Average'])
+    df.plot.line(y=['Loss', 'Moving Average'])
     plt.show()
 
 
@@ -16,12 +16,12 @@ def main(path):
     with open(path, 'rb') as f:
         y_data = pickle.load(f)
     x_data = np.linspace(1, 1000, 1000)
-    df = pd.DataFrame({'Epoch': x_data, 'Loss': y_data})
-    df['Moving Average'] = df['Loss'].rolling(window=50, min_periods=10).mean()
-    #plot_loss_and_moving_average(df)
-    best_epoch = df['Moving Average'].idxmin()
-
-    return best_epoch
+    df = pd.DataFrame(data={'Loss': y_data}, index=x_data)
+    df['Moving Average'] = df['Loss'].rolling(window=100, min_periods=10).mean()
+    plot_loss_and_moving_average(df)
+    best_epoch, min_avg_loss = df['Moving Average'].idxmin(), df['Moving Average'].min()
+    filt = (df['Moving Average'] <= min_avg_loss)
+    #return best_epoch
 
 
 if __name__ == '__main__':

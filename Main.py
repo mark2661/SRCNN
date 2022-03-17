@@ -7,12 +7,14 @@ import os
 import pickle
 import torch.nn as nn
 import torchvision.transforms as transforms
+import pandas as pd
 from torch.utils.data import DataLoader
 from Dataset import TrainingDataset, ValidationDataset
 from Model import SRCNN
 from utils import plot_training_results, save_results_plot
 from piq import ssim, SSIMLoss, MultiScaleSSIMLoss
 from pathlib import Path
+import sys
 
 
 def main(training_data_path, validation_data_path, learning_rate,
@@ -61,8 +63,8 @@ def main(training_data_path, validation_data_path, learning_rate,
     # arrays to store statistics from each training loop
     train_loss, val_loss = [], []
     train_psnr, val_psnr = [], []
-    best_psnr = 0
-    best_weights = copy.deepcopy(model.state_dict())
+    # best_psnr = 0
+    # best_weights = copy.deepcopy(model.state_dict())
     # note the start time for use calculating the final running time of the model training loop
     start = time.time()
 
@@ -92,14 +94,16 @@ def main(training_data_path, validation_data_path, learning_rate,
         val_loss.append(val_epoch_loss)
         val_psnr.append(val_epoch_psnr)
 
-        # save the best state_dict
-        if val_epoch_psnr > best_psnr:
-            best_psnr = val_epoch_psnr
-            best_weights = copy.deepcopy(model.state_dict())
+        # terminate training if over fitting is detected (moving average is increasing)
+        moving_averages = pd.Series(val_loss).rolling(window=50, min_periods=10).mean().fillna(sys.maxsize)
+        if epoch > 50 and moving_averages.iloc[-49] < moving_averages.iloc[-1]:
+            break
 
         # save weights, validation_loss_history, and validation_psnr_history every 250 Epochs
         if epoch > 0 and epoch % 250 == 0:
-            save_current_training_state(best_weight=best_weights, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
+            df = pd.DataFrame({'Training Loss': train_loss, 'Validation Loss': val_loss, 'Training_PSNR': train_psnr,
+                               'Validation PSNR': val_psnr})
+            save_current_training_state(model=model, data_frame=df, output_dir=output_dir,
                                         model_num=model_num, epoch_num=epoch)
 
     end = time.time()
@@ -107,7 +111,9 @@ def main(training_data_path, validation_data_path, learning_rate,
 
     # should maybe wrap in try catch statement ?
     print('Saving model...')
-    save_current_training_state(best_weight=best_weights, val_psnr=val_psnr, val_loss=val_loss, output_dir=output_dir,
+    df = pd.DataFrame({'Training Loss': train_loss, 'Validation Loss': val_loss, 'Training_PSNR': train_psnr,
+                       'Validation PSNR': val_psnr})
+    save_current_training_state(model=model, data_frame=df, output_dir=output_dir,
                                 model_num=model_num, epoch_num=number_of_epochs)
 
     # save the plot of validation loss and PSNR (x-axis equals number of epochs, every 50 epochs)
@@ -119,16 +125,25 @@ def main(training_data_path, validation_data_path, learning_rate,
     # plot_training_results(model, train_loss, train_psnr, val_loss, val_psnr)
 
 
-def save_current_training_state(best_weight, val_psnr, val_loss, output_dir, model_num, epoch_num):
+def save_current_training_state(model, data_frame, output_dir, model_num, epoch_num):
     # save model state dict
-    torch.save(best_weight, os.path.join(output_dir, 'model{}'.format(model_num),
-                                         'model{}_{}epochs.pth'.format(model_num, epoch_num)))
-    # save list of epoch validation PSNR (using pickle to serialise list)
-    with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_psnr_{}.pickle'.format(epoch_num)), 'wb') as f:
-        pickle.dump(val_psnr, f)
-    # save list of epoch validation loss ((using pickle to serialise list)
-    with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_loss_{}.pickle'.format(epoch_num)), 'wb') as f:
-        pickle.dump(val_loss, f)
+    torch.save(model.state_dict(), os.path.join(output_dir, 'model{}'.format(model_num),
+               'model{}_{}epochs.pth'.format(model_num, epoch_num)))
+
+    # save the pandas data frame containing the training history (using pickle to serialise)
+    data_frame.to_pickle(os.path.join(output_dir, 'model{}'.format(model_num),
+                                      'model_{}_data_frame.pickle'.format(epoch_num)))
+
+# def save_current_training_state(best_weight, val_psnr, val_loss, output_dir, model_num, epoch_num):
+#     # save model state dict
+#     torch.save(best_weight, os.path.join(output_dir, 'model{}'.format(model_num),
+#                                          'model{}_{}epochs.pth'.format(model_num, epoch_num)))
+#     # save list of epoch validation PSNR (using pickle to serialise list)
+#     with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_psnr_{}.pickle'.format(epoch_num)), 'wb') as f:
+#         pickle.dump(val_psnr, f)
+#     # save list of epoch validation loss ((using pickle to serialise list)
+#     with open(os.path.join(output_dir, 'model{}'.format(model_num), 'val_loss_{}.pickle'.format(epoch_num)), 'wb') as f:
+#         pickle.dump(val_loss, f)
 
 
 if __name__ == "__main__":

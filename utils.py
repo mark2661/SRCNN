@@ -4,6 +4,7 @@ import torch
 import cv2
 import os
 from matplotlib import pyplot as plt
+import pandas as pd
 
 
 def calculate_psnr(label, outputs, max_val=1.):
