@@ -5,7 +5,7 @@ import os
 import numpy as np
 import argparse
 from matplotlib import pyplot as plt
-from utils import calculate_psnr, artificially_degrade_image, modcrop, calculate_mse
+from utils import calculate_psnr, artificially_degrade_image, modcrop, calculate_mse, shave
 
 
 def display_predicted_results(gt, deg, pre):
@@ -31,7 +31,7 @@ def display_predicted_results(gt, deg, pre):
 
 
 def test_srcnn(REFERENCE_IMAGE_PATH,
-               PRE_TRAINED_MODEL_WEIGHTS_PATH, scale=3):
+               PRE_TRAINED_MODEL_WEIGHTS_PATH, filter_num, scale=3):
     """
     This function predicts a high resolution version of a ground truth image using an artificially
     degraded version of the ground truth image.
@@ -43,7 +43,7 @@ def test_srcnn(REFERENCE_IMAGE_PATH,
     device = 'cuda' if torch.cuda.is_available else 'cpu'
 
     # Create a model instance and load in pre-trained weights
-    model = Model.SRCNN()
+    model = Model.SRCNN(filter_num)
     state_dict = torch.load(PRE_TRAINED_MODEL_WEIGHTS_PATH)
     model.load_state_dict(state_dict)
 
@@ -94,31 +94,34 @@ def test_srcnn(REFERENCE_IMAGE_PATH,
 
     # merge predicted y channel with cr and cb channels and covert to RGB
     deg_y_cr_cb_image[:, :, 0] = predicted[:, :, 0]
-    predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
+    #predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
+    predicted_image = predicted[:, :, 0]
 
-    # convert ground truth and artificially degraded image to RGB for PSNR metric calculations
-    rgb_ref = cv2.cvtColor(ref, cv2.COLOR_BGR2RGB)
-    rgb_deg = cv2.cvtColor(deg, cv2.COLOR_BGR2RGB)
+    r = shave(cv2.cvtColor(ref, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
+    d = shave(cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
+    p = shave(predicted_image, 3)
+    return calculate_psnr(r, d, 255.), calculate_psnr(r, p, 255.)
 
-    return calculate_psnr(rgb_ref, rgb_deg, 255.), calculate_psnr(rgb_ref, predicted_image, 255.)
 
-
-def main(test_set_path, model_weights_path):
+def main(test_set_path, model_weights_path, filter_num):
     running_bi_cubic_psnr = 0
     running_srcnn_psnr = 0
     for image in os.listdir(test_set_path):
         test_image_path = os.path.join(test_set_path, image)
-        bi_cubic_psnr, srcnn_psnr = test_srcnn(test_image_path, model_weights_path)
+        bi_cubic_psnr, srcnn_psnr = test_srcnn(test_image_path, model_weights_path, filter_num)
         running_bi_cubic_psnr += bi_cubic_psnr
         running_srcnn_psnr += srcnn_psnr
 
     average_bi_cubic_psnr = running_bi_cubic_psnr / len(os.listdir(test_set_path))
     average_srcnn_psnr = running_srcnn_psnr / len(os.listdir(test_set_path))
 
+    """
     print(
         "Test set: {}\nAverage Bi-Cubic PSNR: {:.2f}\nAverage SRCNN PSNR: {:.2f}\n".format(test_set_path.split("/")[-1],
                                                                                            average_bi_cubic_psnr,
-                                                                                           average_srcnn_psnr))
+                                                                                          average_srcnn_psnr))
+    """
+    return average_srcnn_psnr
 
 
 if __name__ == '__main__':
@@ -126,7 +129,9 @@ if __name__ == '__main__':
     # parser.add_argument('--test-set-path', type=str, required=True)
     parser.add_argument('--test-set-path', nargs='+', required=True)
     parser.add_argument('--model-weights-path', type=str, required=True)
+    parser.add_argument('--filter-num', type=int, default=128)
     args = parser.parse_args()
     for test_set in args.test_set_path:
         main(test_set_path=test_set,
-             model_weights_path=args.model_weights_path)
+             model_weights_path=args.model_weights_path,
+             filter_num=args.filter_num)

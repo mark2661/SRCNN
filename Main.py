@@ -18,7 +18,7 @@ import sys
 
 
 def main(training_data_path, validation_data_path, learning_rate,
-         batch_size, number_of_epochs, output_dir, model_num=1):
+         batch_size, number_of_epochs, filter_num, output_dir, model_num=1):
     # create an output dir for this model
     Path(os.path.join(output_dir, 'model{}'.format(model_num))).mkdir(parents=True, exist_ok=True)
 
@@ -45,7 +45,7 @@ def main(training_data_path, validation_data_path, learning_rate,
     validation_loader = DataLoader(dataset=validation_dataset, batch_size=1)
 
     # create SRCNN model instance and pass to gpu for training
-    model = SRCNN()
+    model = SRCNN(filter_num)
     model.to(DEVICE)
 
     # define the SRCNN model parameters
@@ -145,6 +145,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=pow(10, -4))
     parser.add_argument('--batch-size', type=int, default=16)
     parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--filter-num', type=int, default=128)
     parser.add_argument('--output-dir', type=str)
     parser.add_argument('--model-num', type=int, default=1)
     args = parser.parse_args()
@@ -153,5 +154,6 @@ if __name__ == "__main__":
          learning_rate=args.lr,
          batch_size=args.batch_size,
          number_of_epochs=args.epochs,
+         filter_num=args.filter_num,
          output_dir=args.output_dir,
          model_num=args.model_num)

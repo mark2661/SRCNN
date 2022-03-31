@@ -41,7 +41,7 @@ def display_predicted_results(gt, deg, pre):
 
 
 def predict_srcnn(REFERENCE_IMAGE_PATH,
-                  PRE_TRAINED_MODEL_WEIGHTS_PATH, scale=3):
+                  PRE_TRAINED_MODEL_WEIGHTS_PATH, filter_num, scale=3):
     """
     This function predicts a high resolution version of a ground truth image using an artificially
     degraded version of the ground truth image.
@@ -54,7 +54,7 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
     device = 'cuda' if torch.cuda.is_available else 'cpu'
 
     # Create a model instance and load in pre-trained weights
-    model = Model.SRCNN()
+    model = Model.SRCNN(filter_num)
     state_dict = torch.load(PRE_TRAINED_MODEL_WEIGHTS_PATH)
     model.load_state_dict(state_dict)
 
@@ -115,18 +115,20 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
     return r, d, p
 
 
-def main(test_set_path, model_weights_path):
+def main(test_set_path, model_weights_path, filter_num):
     #test_image_path = os.path.join(test_set_path, 'bird_GT.bmp')
     test_image_path = os.path.join(test_set_path, 'butterfly_GT.bmp')
     #test_image_path = os.path.join(test_set_path, 'woman_GT.bmp')
     #test_image_path = os.path.join(test_set_path, 'baby_GT.bmp')
-    display_predicted_results(*predict_srcnn(test_image_path, model_weights_path))
+    display_predicted_results(*predict_srcnn(test_image_path, model_weights_path, filter_num))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--test-set-path', type=str, required=True)
     parser.add_argument('--model-weights-path', type=str, required=True)
+    parser.add_argument('--filter-num', type=int, default=128)
     args = parser.parse_args()
     main(test_set_path=args.test_set_path,
-         model_weights_path=args.model_weights_path)
+         model_weights_path=args.model_weights_path,
+         filter_num=args.filter_num)
