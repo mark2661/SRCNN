@@ -3,7 +3,9 @@ from numpy import percentile
 import pandas as pd
 import argparse
 import os
+import openpyxl
 import glob
+import Test
 import re
 from definitions import ROOT_DIR
 from Test import main as test
@@ -16,29 +18,41 @@ def calculate_five_number_summary(data):
 
 
 if __name__ == '__main__':
-    models = []
-    TEST_SET_PATH = os.path.join(ROOT_DIR, 'testSets', 'Set14')
-    # for network_dir in os.listdir(os.path.join(ROOT_DIR, 'outputs', '64_network')):
-    #     for model_dir in os.listdir(os.path.join(ROOT_DIR, 'outputs', network_dir, '64_network')):
-    #         for file in glob.glob(os.path.join(ROOT_DIR, 'outputs', network_dir, model_dir, '*.pth')):
-    #             models.append(file)
-    #     break
-    # avg = [test(TEST_SET_PATH, model) for model in models]
-    # print(avg)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--network-path', type=str, required=True)
+    # parser.add_argument('--network-filter-number', type=int, required=True)
+    #
+    # args = parser.parse_args()
+    # NETWORK_DIR_PATH = args.network_path
+    # NETWORK_FILTER_NUMBER = args.network_filter_number
+    SET14_PATH = os.path.join(ROOT_DIR, 'testSets', 'Set14')
 
-    for model_dir in os.listdir(os.path.join(ROOT_DIR, 'outputs', '64_network')):
-        for file in glob.glob(os.path.join(ROOT_DIR, 'outputs', '64_network', model_dir, '*.pth')):
-            models.append(file)
+    for network in glob.glob(os.path.join(ROOT_DIR, 'outputs', '*')):
+        network_filter_number = int(network.split('\\')[-1].split('_')[0])
+        models = []
+        model_averages = []
+        print(network_filter_number)
 
-    avg = [test(TEST_SET_PATH, model, 64) for model in models]
-    print(calculate_five_number_summary(avg))
+        for model_state_dict in glob.glob(os.path.join(network, 'model*', 'model*.pth')):
+            models.append(model_state_dict)
+
+        for model_state_dict in models:
+            model_averages.append(Test.main(SET14_PATH, model_state_dict, network_filter_number))
+
+        if os.path.exists(os.path.join(os.getcwd(), 'five_number_summery.xlsx')):
+            wb = openpyxl.load_workbook(filename='five_number_summery.xlsx')
+        else:
+            wb = openpyxl.Workbook()
+            page = wb.active
+            page.title = 'Five Number Summary'
+            page.append(['Network', 'Minimum', 'First quartile', 'Median', 'Second quartile', 'Maximum'])
+
+        page = wb.active
+        page.append([network_filter_number] + list(calculate_five_number_summary(model_averages)))
+        wb.save(filename='five_number_summery.xlsx')
 
 
-    # five_num_sums = [calculate_five_number_summary(data) for data in models]
-    # five_num_sum_df = pd.DataFrame(five_num_sums, columns=['Minimum', '1st Quartile', 'Median', '3rd Quartile',
-    #                                                        'Maximum'])
-    # averages = pd.DataFrame([five_num_sum_df[column].mean(axis=0) for column in five_num_sum_df],
-    #                         columns=['Minimum', '1st Quartile', 'Median', '3rd Quartile', 'Maximum'], index=['average'])
-    # print(five_num_sum_df)
-    # print(averages)
-    # five_num_sum_df = pd.concat([five_num_sum_df, averages], axis=0)
+
+
+
+

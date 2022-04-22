@@ -2,3 +2,4 @@
 /TrainingData/*
 /outputs/*
 /test_outputs/*
+/DataAnalysisScripts/*.xlsx
