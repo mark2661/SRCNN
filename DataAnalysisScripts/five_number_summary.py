@@ -1,14 +1,14 @@
 # calculate a 5-number summary
 from numpy import percentile
 import pandas as pd
-import argparse
 import os
 import openpyxl
 import glob
 import Test
-import re
 from definitions import ROOT_DIR
-from Test import main as test
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 
 
 def calculate_five_number_summary(data):
@@ -18,14 +18,9 @@ def calculate_five_number_summary(data):
 
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--network-path', type=str, required=True)
-    # parser.add_argument('--network-filter-number', type=int, required=True)
-    #
-    # args = parser.parse_args()
-    # NETWORK_DIR_PATH = args.network_path
-    # NETWORK_FILTER_NUMBER = args.network_filter_number
+
     SET14_PATH = os.path.join(ROOT_DIR, 'testSets', 'Set14')
+    model_averages_dict = dict()
 
     for network in glob.glob(os.path.join(ROOT_DIR, 'outputs', '*')):
         network_filter_number = int(network.split('\\')[-1].split('_')[0])
@@ -33,14 +28,20 @@ if __name__ == '__main__':
         model_averages = []
         print(network_filter_number)
 
+        # for each model in the network folder append the .pth file containing the model state dict to models
         for model_state_dict in glob.glob(os.path.join(network, 'model*', 'model*.pth')):
             models.append(model_state_dict)
 
+        # for each model in the network folder calculate the average PSNR for the test set
         for model_state_dict in models:
             model_averages.append(Test.main(SET14_PATH, model_state_dict, network_filter_number))
 
-        if os.path.exists(os.path.join(os.getcwd(), 'five_number_summery.xlsx')):
-            wb = openpyxl.load_workbook(filename='five_number_summery.xlsx')
+        # add the PSNR averages for each model to model averages_dict
+        model_averages_dict[network_filter_number] = model_averages
+
+        # calculate the five number summary and append results to five_number_summary.xlsx
+        if os.path.exists(os.path.join(os.getcwd(), 'five_number_summary.xlsx')):
+            wb = openpyxl.load_workbook(filename='five_number_summary.xlsx')
         else:
             wb = openpyxl.Workbook()
             page = wb.active
@@ -49,10 +50,34 @@ if __name__ == '__main__':
 
         page = wb.active
         page.append([network_filter_number] + list(calculate_five_number_summary(model_averages)))
-        wb.save(filename='five_number_summery.xlsx')
+        wb.save(filename='five_number_summary.xlsx')
 
+    # create a pandas data frame with average test PSNR for each model for each network for box plots
+    df = pd.DataFrame.from_dict(model_averages_dict, orient='columns')
+    df = df[sorted(df.columns.tolist())]
 
+    # code for box plot of data frame data
+    sns.set(style='whitegrid')
+    fig, ax = plt.subplots(figsize=(8, 6))
+    g = sns.boxplot(data=df, width=0.7)
+    plt.title("Networks", fontsize=16)
+    xvalues = ['16-8-1 filter network', '32-16-1 filter network', '64-32-1 filter network', '128-64-1 filter network',
+               '256-128-1 filter network']
+    plt.xticks(np.arange(5), xvalues)
+    # plt.yticks(np.arange(df.min().min(), df.max().max()))
 
+    # remove all borders except bottom
+    sns.despine(top=True,
+                right=True,
+                left=True,
+                bottom=False)
 
-
-
+    # Set colors of box plots
+    palette = ['plum', 'g', 'orange', 'b', 'r']
+    color_dict = dict(zip(xvalues, palette))
+    for i in range(0, 5):
+        mybox = g.artists[i]
+        mybox.set_facecolor(color_dict[xvalues[i]])
+    plt.tight_layout()
+    # plt.savefig('all_sat_boxplots.png', dpi=500)
+    plt.show()
