@@ -110,31 +110,46 @@ def test_srcnn(REFERENCE_IMAGE_PATH,
     return calculate_psnr(r, p, 255.), ssim(r, p), calculate_mse(r, p)
 
 
-def main(test_set_path, model_weights_path, filter_num):
-    running_bi_cubic_psnr = 0
-    running_srcnn_psnr = 0
-    running_srcnn_ssim = 0
-    running_srcnn_mse = 0
-    for image in os.listdir(test_set_path):
-        test_image_path = os.path.join(test_set_path, image)
-        srcnn_psnr, srcnn_ssim, srcnn_mse = test_srcnn(test_image_path, model_weights_path, filter_num)
-        # running_bi_cubic_psnr += bi_cubic_psnr
-        running_srcnn_psnr += srcnn_psnr
-        running_srcnn_ssim += srcnn_ssim
-        running_srcnn_mse += srcnn_mse
+def main(test_set_path, model_weights_path, filter_num, median=False):
+    if median:
+        srcnn_psnr = []
+        srcnn_ssim = []
+        srcnn_mse = []
+        for image in os.listdir(test_set_path):
+                test_image_path = os.path.join(test_set_path, image)
+                srcnn_psnr_score, srcnn_ssim_score, srcnn_mse_score = test_srcnn(test_image_path, model_weights_path, filter_num)
+                srcnn_psnr.append(srcnn_psnr_score)
+                srcnn_mse.append(srcnn_mse_score)
+                srcnn_ssim.append(srcnn_ssim_score)
 
-    # average_bi_cubic_psnr = running_bi_cubic_psnr / len(os.listdir(test_set_path))
-    average_srcnn_psnr = running_srcnn_psnr / len(os.listdir(test_set_path))
-    average_srcnn_ssim = running_srcnn_ssim / len(os.listdir(test_set_path))
-    average_srcnn_mse = running_srcnn_mse / len(os.listdir(test_set_path))
+        return np.median(srcnn_psnr), np.median(srcnn_ssim), np.median(srcnn_mse)
 
-    """
-    print(
-        "Test set: {}\nAverage Bi-Cubic PSNR: {:.2f}\nAverage SRCNN PSNR: {:.2f}\n".format(test_set_path.split("/")[-1],
-                                                                                           average_bi_cubic_psnr,
-                                                                                          average_srcnn_psnr))
-    """
-    return average_srcnn_psnr, average_srcnn_ssim, average_srcnn_mse
+    else:
+        running_bi_cubic_psnr = 0
+        running_srcnn_psnr = 0
+        running_srcnn_ssim = 0
+        running_srcnn_mse = 0
+        for image in os.listdir(test_set_path):
+            test_image_path = os.path.join(test_set_path, image)
+            srcnn_psnr, srcnn_ssim, srcnn_mse = test_srcnn(test_image_path, model_weights_path, filter_num)
+            # running_bi_cubic_psnr += bi_cubic_psnr
+            running_srcnn_psnr += srcnn_psnr
+            running_srcnn_ssim += srcnn_ssim
+            running_srcnn_mse += srcnn_mse
+
+        # average_bi_cubic_psnr = running_bi_cubic_psnr / len(os.listdir(test_set_path))
+        average_srcnn_psnr = running_srcnn_psnr / len(os.listdir(test_set_path))
+        average_srcnn_ssim = running_srcnn_ssim / len(os.listdir(test_set_path))
+        average_srcnn_mse = running_srcnn_mse / len(os.listdir(test_set_path))
+
+        """
+        print(
+            "Test set: {}\nAverage Bi-Cubic PSNR: {:.2f}\nAverage SRCNN PSNR: {:.2f}\n".format(test_set_path.split("/")[-1],
+                                                                                               average_bi_cubic_psnr,
+                                                                                              average_srcnn_psnr))
+        """
+        return average_srcnn_psnr, average_srcnn_ssim, average_srcnn_mse
+
 
 
 def calculate_averages(l):
