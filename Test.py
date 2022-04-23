@@ -4,30 +4,37 @@ import Model
 import os
 import numpy as np
 import argparse
+import glob
+import pandas as pd
+import openpyxl
+from definitions import ROOT_DIR
 from matplotlib import pyplot as plt
 from utils import calculate_psnr, artificially_degrade_image, modcrop, calculate_mse, shave
+from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import mean_squared_error as mse
+from collections import defaultdict
 
 
-def display_predicted_results(gt, deg, pre):
-    # display image subplots
-    fig, axs = plt.subplots(1, 3, figsize=(20, 8))
-    axs[0].imshow(gt)
-    axs[0].set_title('Original Image')
-
-    axs[1].imshow(deg)
-    axs[1].set_title('Degraded Image\nPSNR: {:.2f}\nMSE: {:.2f}'.format(calculate_psnr(gt, deg, 255.),
-                                                                        calculate_mse(gt, deg)))
-
-    axs[2].imshow(pre)
-    axs[2].set_title("SRCNN Predicted Image\nPSNR: {:.2f}\nMSE: {:.2f}".format(calculate_psnr(gt, pre, 255.),
-                                                                               calculate_mse(gt, pre)))
-
-    # remove axis ticks
-    for ax in axs:
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    plt.show()
+# def display_predicted_results(gt, deg, pre):
+#     # display image subplots
+#     fig, axs = plt.subplots(1, 3, figsize=(20, 8))
+#     axs[0].imshow(gt)
+#     axs[0].set_title('Original Image')
+#
+#     axs[1].imshow(deg)
+#     axs[1].set_title('Degraded Image\nPSNR: {:.2f}\nMSE: {:.2f}'.format(calculate_psnr(gt, deg, 255.),
+#                                                                         calculate_mse(gt, deg)))
+#
+#     axs[2].imshow(pre)
+#     axs[2].set_title("SRCNN Predicted Image\nPSNR: {:.2f}\nMSE: {:.2f}".format(calculate_psnr(gt, pre, 255.),
+#                                                                                calculate_mse(gt, pre)))
+#
+#     # remove axis ticks
+#     for ax in axs:
+#         ax.set_xticks([])
+#         ax.set_yticks([])
+#
+#     plt.show()
 
 
 def test_srcnn(REFERENCE_IMAGE_PATH,
@@ -94,26 +101,32 @@ def test_srcnn(REFERENCE_IMAGE_PATH,
 
     # merge predicted y channel with cr and cb channels and covert to RGB
     deg_y_cr_cb_image[:, :, 0] = predicted[:, :, 0]
-    #predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
+    # predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
     predicted_image = predicted[:, :, 0]
 
     r = shave(cv2.cvtColor(ref, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
     d = shave(cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
     p = shave(predicted_image, 3)
-    return calculate_psnr(r, d, 255.), calculate_psnr(r, p, 255.)
+    return calculate_psnr(r, p, 255.), ssim(r, p), calculate_mse(r, p)
 
 
 def main(test_set_path, model_weights_path, filter_num):
     running_bi_cubic_psnr = 0
     running_srcnn_psnr = 0
+    running_srcnn_ssim = 0
+    running_srcnn_mse = 0
     for image in os.listdir(test_set_path):
         test_image_path = os.path.join(test_set_path, image)
-        bi_cubic_psnr, srcnn_psnr = test_srcnn(test_image_path, model_weights_path, filter_num)
-        running_bi_cubic_psnr += bi_cubic_psnr
+        srcnn_psnr, srcnn_ssim, srcnn_mse = test_srcnn(test_image_path, model_weights_path, filter_num)
+        # running_bi_cubic_psnr += bi_cubic_psnr
         running_srcnn_psnr += srcnn_psnr
+        running_srcnn_ssim += srcnn_ssim
+        running_srcnn_mse += srcnn_mse
 
-    average_bi_cubic_psnr = running_bi_cubic_psnr / len(os.listdir(test_set_path))
+    # average_bi_cubic_psnr = running_bi_cubic_psnr / len(os.listdir(test_set_path))
     average_srcnn_psnr = running_srcnn_psnr / len(os.listdir(test_set_path))
+    average_srcnn_ssim = running_srcnn_ssim / len(os.listdir(test_set_path))
+    average_srcnn_mse = running_srcnn_mse / len(os.listdir(test_set_path))
 
     """
     print(
@@ -121,17 +134,36 @@ def main(test_set_path, model_weights_path, filter_num):
                                                                                            average_bi_cubic_psnr,
                                                                                           average_srcnn_psnr))
     """
-    return average_srcnn_psnr
+    return average_srcnn_psnr, average_srcnn_ssim, average_srcnn_mse
+
+
+def calculate_averages(l):
+    averages = []
+    for i in range(3):
+        running_total = 0
+        for t in l:
+            running_total += t[i]
+        averages.append(running_total / len(l))
+    return tuple(averages)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    # parser.add_argument('--test-set-path', type=str, required=True)
-    parser.add_argument('--test-set-path', nargs='+', required=True)
-    parser.add_argument('--model-weights-path', type=str, required=True)
-    parser.add_argument('--filter-num', type=int, default=128)
-    args = parser.parse_args()
-    for test_set in args.test_set_path:
-        main(test_set_path=test_set,
-             model_weights_path=args.model_weights_path,
-             filter_num=args.filter_num)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--output-dir', type=str, required=True)
+    # args = parser.parse_args()
+    # output_dir = args.output_dir
+    test_results = defaultdict(lambda: [])
+
+    for network in glob.glob(os.path.join(ROOT_DIR, 'outputs', '*')):
+        network_filter_number = int(network.split('\\')[-1].split('_')[0])
+        print(network_filter_number)
+        for test_set_path in glob.glob(os.path.join(ROOT_DIR, 'testSets', '*')):
+            print(test_set_path)
+            results = []
+            for model_state_dict in glob.glob(os.path.join(network, 'model*', 'model*.pth')):
+                results.append(main(test_set_path, model_state_dict, network_filter_number))
+            test_results[network_filter_number].append(calculate_averages(results))
+
+    df = pd.DataFrame.from_dict(test_results, orient='index', columns=['BSDS100', 'Set5', 'Set14', 'Urban100'])
+    df.to_csv(os.path.join(ROOT_DIR, 'Data', 'test_set_results.csv'), encoding='utf-8')
+    print(df)

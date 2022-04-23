@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
         # for each model in the network folder calculate the average PSNR for the test set
         for model_state_dict in models:
-            model_averages.append(Test.main(SET14_PATH, model_state_dict, network_filter_number))
+            model_averages.append(Test.main(SET14_PATH, model_state_dict, network_filter_number)[0])
 
         # add the PSNR averages for each model to model averages_dict
         model_averages_dict[network_filter_number] = model_averages
@@ -58,13 +58,15 @@ if __name__ == '__main__':
 
     # code for box plot of data frame data
     sns.set(style='whitegrid')
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(19.2, 10.8))
     g = sns.boxplot(data=df, width=0.7)
-    plt.title("Networks", fontsize=16)
+    sns.stripplot(data=df, color='black')
+    plt.title("Five Number Summary Box Plots From Average PSNR Score on Set14 Test Set", fontsize=20, weight='bold')
     xvalues = ['16-8-1 filter network', '32-16-1 filter network', '64-32-1 filter network', '128-64-1 filter network',
                '256-128-1 filter network']
     plt.xticks(np.arange(5), xvalues)
     # plt.yticks(np.arange(df.min().min(), df.max().max()))
+    g.set(ylabel="Average PSNR")
 
     # remove all borders except bottom
     sns.despine(top=True,
@@ -79,5 +81,5 @@ if __name__ == '__main__':
         mybox = g.artists[i]
         mybox.set_facecolor(color_dict[xvalues[i]])
     plt.tight_layout()
-    # plt.savefig('all_sat_boxplots.png', dpi=500)
-    plt.show()
+    plt.savefig(os.path.join(ROOT_DIR, 'Data', 'five_num_sum_boxplots.svg'), format='svg', dpi=1200)
+    #plt.show()
