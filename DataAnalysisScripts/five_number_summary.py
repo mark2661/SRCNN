@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
         page = wb.active
         page.append([network_filter_number] + list(calculate_five_number_summary(model_averages)))
-        wb.save(filename='five_number_summary.xlsx')
+        wb.save(filename=os.path.join(ROOT_DIR, 'Data', 'five_number_summary.xlsx'))
 
     # create a pandas data frame with average test PSNR for each model for each network for box plots
     df = pd.DataFrame.from_dict(model_averages_dict, orient='columns')

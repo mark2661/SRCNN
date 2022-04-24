@@ -7,6 +7,7 @@ import argparse
 import glob
 import pandas as pd
 import openpyxl
+import pickle
 from definitions import ROOT_DIR
 from matplotlib import pyplot as plt
 from utils import calculate_psnr, artificially_degrade_image, modcrop, calculate_mse, shave
@@ -167,7 +168,7 @@ if __name__ == '__main__':
     # parser.add_argument('--output-dir', type=str, required=True)
     # args = parser.parse_args()
     # output_dir = args.output_dir
-    test_results = defaultdict(lambda: [])
+    test_results = dict()
 
     for network in glob.glob(os.path.join(ROOT_DIR, 'outputs', '*')):
         network_filter_number = int(network.split('\\')[-1].split('_')[0])
@@ -176,8 +177,17 @@ if __name__ == '__main__':
             print(test_set_path)
             results = []
             for model_state_dict in glob.glob(os.path.join(network, 'model*', 'model*.pth')):
-                results.append(main(test_set_path, model_state_dict, network_filter_number))
-            test_results[network_filter_number].append(calculate_averages(results))
+                psnr_score, ssim_score, mse_score = main(test_set_path, model_state_dict, network_filter_number)
+                results.append((psnr_score, ssim_score, mse_score))
+            if network_filter_number in test_results.keys():
+                test_results[network_filter_number].append(calculate_averages(results))
+            else:
+                test_results[network_filter_number] = [calculate_averages(results)]
+
+
+
+    with open('test_results.pickle', 'wb') as f:
+        pickle.dump(test_results, f)
 
     df = pd.DataFrame.from_dict(test_results, orient='index', columns=['BSDS100', 'Set5', 'Set14', 'Urban100'])
     df.to_csv(os.path.join(ROOT_DIR, 'Data', 'test_set_results.csv'), encoding='utf-8')
