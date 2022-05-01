@@ -105,14 +105,14 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
 
     # merge predicted y channel with cr and cb channels and covert to RGB
     deg_y_cr_cb_image[:, :, 0] = predicted[:, :, 0]
-    # predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
-    predicted_image = predicted[:, :, 0]
+    predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
+    # predicted_image = predicted[:, :, 0]
 
-    #return cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY), cv2.cvtColor(deg, cv2.COLOR_BGR2GRAY), predicted_image
-    r = shave(cv2.cvtColor(ref, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
-    d = shave(cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
-    p = shave(predicted_image, 3)
-    return r, d, p
+    return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted_image
+    # r = shave(cv2.cvtColor(ref, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
+    # d = shave(cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
+    # p = shave(predicted_image, 3)
+    # return r, d, p
 
 
 def main(test_set_path, model_weights_path, filter_num):

@@ -37,6 +37,21 @@ from collections import defaultdict
 #
 #     plt.show()
 
+def test_interpolation(REFERENCE_IMAGE_PATH, scale=3):
+    # load the reference and degraded image
+    ref = cv2.imread(REFERENCE_IMAGE_PATH)
+    deg = artificially_degrade_image(ref, scale)
+
+    # resize the images so they divide wholly with the scale value
+    ref = modcrop(ref, scale)
+    deg = modcrop(deg, scale)
+    ref = shave(cv2.cvtColor(ref, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
+
+    deg_y_cr_cb_image = cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)
+    deg_y_channel = shave(deg_y_cr_cb_image[:, :, 0], scale)
+
+    return calculate_psnr(ref, deg_y_channel, 255.), ssim(ref, deg_y_channel), calculate_mse(ref, deg_y_channel)
+
 
 def test_srcnn(REFERENCE_IMAGE_PATH,
                PRE_TRAINED_MODEL_WEIGHTS_PATH, filter_num, scale=3):
@@ -117,11 +132,12 @@ def main(test_set_path, model_weights_path, filter_num, median=False):
         srcnn_ssim = []
         srcnn_mse = []
         for image in os.listdir(test_set_path):
-                test_image_path = os.path.join(test_set_path, image)
-                srcnn_psnr_score, srcnn_ssim_score, srcnn_mse_score = test_srcnn(test_image_path, model_weights_path, filter_num)
-                srcnn_psnr.append(srcnn_psnr_score)
-                srcnn_mse.append(srcnn_mse_score)
-                srcnn_ssim.append(srcnn_ssim_score)
+            test_image_path = os.path.join(test_set_path, image)
+            srcnn_psnr_score, srcnn_ssim_score, srcnn_mse_score = test_srcnn(test_image_path, model_weights_path,
+                                                                             filter_num)
+            srcnn_psnr.append(srcnn_psnr_score)
+            srcnn_mse.append(srcnn_mse_score)
+            srcnn_ssim.append(srcnn_ssim_score)
 
         return np.median(srcnn_psnr), np.median(srcnn_ssim), np.median(srcnn_mse)
 
@@ -150,7 +166,6 @@ def main(test_set_path, model_weights_path, filter_num, median=False):
                                                                                               average_srcnn_psnr))
         """
         return average_srcnn_psnr, average_srcnn_ssim, average_srcnn_mse
-
 
 
 def calculate_averages(l):
@@ -183,8 +198,6 @@ if __name__ == '__main__':
                 test_results[network_filter_number].append(calculate_averages(results))
             else:
                 test_results[network_filter_number] = [calculate_averages(results)]
-
-
 
     with open('test_results.pickle', 'wb') as f:
         pickle.dump(test_results, f)

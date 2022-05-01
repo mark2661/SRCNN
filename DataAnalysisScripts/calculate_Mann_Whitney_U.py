@@ -30,7 +30,7 @@ if __name__ == '__main__':
     wb = openpyxl.Workbook()
     page = wb.active
     page.title = 'Mann-Whitney-U results'
-    page.append(['Network 1', 'Network 2', 'P value'])
+    page.append(['Network 1', 'Network 2', 'P value', 'U value'])
 
     # perform pairwise Mann-Whitney-U test
     df_column_names = list(df)
@@ -38,6 +38,6 @@ if __name__ == '__main__':
         for j in range(i+1, len(df_column_names)):
             U, p_score = mannwhitneyu(df[df_column_names[i]], df[df_column_names[j]])
             page.append(['{}-{}-1'.format(df_column_names[i], df_column_names[i]//2),
-                         '{}-{}-1'.format(df_column_names[j], df_column_names[j]//2), p_score])
+                         '{}-{}-1'.format(df_column_names[j], df_column_names[j]//2), p_score, U])
     wb.save(filename=os.path.join(ROOT_DIR, 'Data', 'mann-whitney-u-results.xlsx'))
 
