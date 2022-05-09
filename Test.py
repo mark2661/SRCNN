@@ -143,21 +143,21 @@ def main(test_set_path, model_weights_path, filter_num, median=False):
 
     else:
         running_bi_cubic_psnr = 0
-        running_srcnn_psnr = 0
-        running_srcnn_ssim = 0
-        running_srcnn_mse = 0
+        srcnn_psnr_scores = []
+        srcnn_ssim_scores = []
+        srcnn_mse_scores = []
         for image in os.listdir(test_set_path):
             test_image_path = os.path.join(test_set_path, image)
-            srcnn_psnr, srcnn_ssim, srcnn_mse = test_srcnn(test_image_path, model_weights_path, filter_num)
+            result = test_srcnn(test_image_path, model_weights_path, filter_num)
             # running_bi_cubic_psnr += bi_cubic_psnr
-            running_srcnn_psnr += srcnn_psnr
-            running_srcnn_ssim += srcnn_ssim
-            running_srcnn_mse += srcnn_mse
+            srcnn_psnr_scores.append(result[0])
+            srcnn_ssim_scores.append(result[1])
+            srcnn_mse_scores.append(result[2])
 
         # average_bi_cubic_psnr = running_bi_cubic_psnr / len(os.listdir(test_set_path))
-        average_srcnn_psnr = running_srcnn_psnr / len(os.listdir(test_set_path))
-        average_srcnn_ssim = running_srcnn_ssim / len(os.listdir(test_set_path))
-        average_srcnn_mse = running_srcnn_mse / len(os.listdir(test_set_path))
+        average_srcnn_psnr = np.mean(srcnn_psnr_scores)
+        average_srcnn_ssim = np.mean(srcnn_ssim_scores)
+        average_srcnn_mse = np.mean(srcnn_mse_scores)
 
         """
         print(
@@ -190,18 +190,34 @@ if __name__ == '__main__':
         print(network_filter_number)
         for test_set_path in glob.glob(os.path.join(ROOT_DIR, 'testSets', '*')):
             print(test_set_path)
-            results = []
+            psnr_results = []
+            ssim_results = []
+            mse_results = []
             for model_state_dict in glob.glob(os.path.join(network, 'model*', 'model*.pth')):
                 psnr_score, ssim_score, mse_score = main(test_set_path, model_state_dict, network_filter_number)
-                results.append((psnr_score, ssim_score, mse_score))
+                psnr_results.append(psnr_score)
+                ssim_results.append(ssim_score)
+                mse_results.append(mse_score)
+            # if network_filter_number in test_results.keys():
+            #     test_results[network_filter_number].append((np.median(sorted(psnr_results)),
+            #                                                 np.median(sorted(ssim_results)),
+            #                                                 np.median(sorted(mse_results))))
+            # else:
+            #     test_results[network_filter_number] = [(np.median(sorted(psnr_results)),
+            #                                             np.median(sorted(ssim_results)),
+            #                                             np.median(sorted(mse_results)))]
             if network_filter_number in test_results.keys():
-                test_results[network_filter_number].append(calculate_averages(results))
+                test_results[network_filter_number].append((np.median(psnr_results)),
+                                                            np.median(ssim_results),
+                                                            np.median(mse_results))
             else:
-                test_results[network_filter_number] = [calculate_averages(results)]
+                test_results[network_filter_number] = [(np.median(psnr_results)),
+                                                        np.median(ssim_results),
+                                                        np.median(mse_results)]
 
     with open('test_results.pickle', 'wb') as f:
         pickle.dump(test_results, f)
 
     df = pd.DataFrame.from_dict(test_results, orient='index', columns=['BSDS100', 'Set5', 'Set14', 'Urban100'])
-    df.to_csv(os.path.join(ROOT_DIR, 'Data', 'test_set_results.csv'), encoding='utf-8')
+    df.to_pickle(os.path.join(ROOT_DIR, 'Data', 'test_set_results_mse.pkl'))
     print(df)
