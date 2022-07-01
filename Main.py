@@ -5,7 +5,6 @@ import Train
 import argparse
 import os
 import torch.nn as nn
-import torchvision.transforms as transforms
 import pandas as pd
 from torch.utils.data import DataLoader
 from Dataset import TrainingDataset, ValidationDataset

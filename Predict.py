@@ -5,9 +5,7 @@ import os
 import numpy as np
 import argparse
 from matplotlib import pyplot as plt
-from utils import calculate_psnr, artificially_degrade_image, modcrop, calculate_mse, shave
-from skimage.metrics import structural_similarity as ssim
-from skimage.metrics import mean_squared_error as mse
+from utils import calculate_psnr, artificially_degrade_image, modcrop, calculate_mse
 
 
 def display_predicted_results(gt, deg, pre):
@@ -144,10 +142,6 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
 
 
 def main(test_set_path, model_weights_path, filter_num):
-    # test_image_path = os.path.join(test_set_path, 'bird_GT.bmp')
-    #test_image_path = os.path.join(test_set_path, 'butterfly.bmp')
-    # test_image_path = os.path.join(test_set_path, 'woman_GT.bmp')
-    # test_image_path = os.path.join(test_set_path, 'baby_GT.bmp')
     test_image_path = os.path.join(test_set_path, 'filter_test.png')
     display_predicted_results(*predict_srcnn(test_image_path, model_weights_path, filter_num))
 
