@@ -6,7 +6,7 @@ import numpy as np
 import argparse
 from matplotlib import pyplot as plt
 from utils import calculate_psnr, artificially_degrade_image, modcrop, calculate_mse
-
+from definitions import ROOT_DIR
 
 def display_predicted_results(gt, deg, pre):
     # # display image subplots
@@ -63,13 +63,11 @@ def display_predicted_results(gt, deg, pre):
     plt.show()
 
 
-def predict_srcnn(REFERENCE_IMAGE_PATH,
-                  PRE_TRAINED_MODEL_WEIGHTS_PATH, filter_num, scale=3, greyscale=False):
+def predict_srcnn(REFERENCE_IMAGE_PATH, scale=3, greyscale=False):
     """
     This function predicts a high resolution version of a ground truth image using an artificially
     degraded version of the ground truth image.
     :param REFERENCE_IMAGE_PATH: file path to the ground truth image
-    :param PRE_TRAINED_MODEL_WEIGHTS_PATH: file path to the pre-trained SRCNN weights
     :param scale: up-scaling factor of the low res image
     :return: ground truth image (RBG format), Bi-linearly interpolated low res image (RBG format),
              SRCNN predicted hi-res image (RBG format)
@@ -77,8 +75,9 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
     device = 'cuda' if torch.cuda.is_available else 'cpu'
 
     # Create a model instance and load in pre-trained weights
-    model = Model.SRCNN(filter_num)
-    state_dict = torch.load(PRE_TRAINED_MODEL_WEIGHTS_PATH)
+    model = Model.SRCNN()
+    model_weights_path = os.path.join(ROOT_DIR, "model_weights.pth")
+    state_dict = torch.load(model_weights_path)
     model.load_state_dict(state_dict)
 
     # pass the model to the device
@@ -129,29 +128,20 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
     # merge predicted y channel with cr and cb channels and covert to RGB
     deg_y_cr_cb_image[:, :, 0] = predicted[:, :, 0]
     predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
-    # predicted_image = predicted[:, :, 0]
+
     if greyscale:
         return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted[:, :, 0]
     else:
         return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted_image
-    # r = shave(cv2.cvtColor(ref, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
-    # d = shave(cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
-    # p = shave(predicted_image, 3)
-    # return r, d, p
 
 
 
-def main(test_set_path, model_weights_path, filter_num):
-    test_image_path = os.path.join(test_set_path, 'filter_test.png')
-    display_predicted_results(*predict_srcnn(test_image_path, model_weights_path, filter_num))
+def main(image_path):
+    display_predicted_results(*predict_srcnn(image_path))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--test-set-path', type=str, required=True)
-    parser.add_argument('--model-weights-path', type=str, required=True)
-    parser.add_argument('--filter-num', type=int, default=128)
+    parser.add_argument('--image-path', type=str, required=True)
     args = parser.parse_args()
-    main(test_set_path=args.test_set_path,
-         model_weights_path=args.model_weights_path,
-         filter_num=args.filter_num)
+    main(image_path=args.image_path)
