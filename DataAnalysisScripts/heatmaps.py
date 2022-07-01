@@ -175,57 +175,62 @@ if __name__ == '__main__':
     # sns.heatmap(data=df_5_ssim[['Bi-linear interpolation', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
     #             annot=True, fmt=".3f", linewidths=.5, ax=ax[1][1], cmap='Reds')
     # ax[1][1].set_title('Set5 SSIM Results')
-    # # f.tight_layout()
+    # #plt.savefig(os.path.join(ROOT_DIR, 'Data', 'plots', 'Set14_hm.svg'), format='svg', dpi=1200)
     # plt.show()
 
-    # sns.set_theme()
-    # f, ax = plt.subplots(1, 2, figsize=(19.2, 10.8))
-    # f.suptitle('Image Metric Heatmap Set5', fontsize=20)
-    #
-    # # sns.heatmap(data=df_14_psnr[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
-    # #             annot=True, fmt=".3f", linewidths=.5, ax=ax[0], cmap='Reds')
-    # # ax[0].set_title('PSNR Results')
-    # # ax[0].tick_params(axis='x', rotation=30)
-    #
+    sns.set_theme()
+    f, ax = plt.subplots(1, 2, figsize=(19.2, 10.8))
+    f.suptitle('Image Metric Heatmap Set14', fontsize=20, weight='bold')
+
+    sns.heatmap(data=df_14_psnr[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
+                annot=True, fmt=".3f", linewidths=.5, ax=ax[0], cmap='Reds')
+    ax[0].set_title('PSNR Results', fontsize=16, weight='bold')
+    ax[0].tick_params(axis='x', rotation=30, labelsize=12)
+    ax[0].tick_params(axis='y', labelsize=12)
+
     # sns.heatmap(data=df_5_psnr[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
     #             annot=True, fmt=".3f", linewidths=.5, ax=ax[0], cmap='Reds')
-    # ax[0].set_title('PSNR Results')
+    # ax[0].set_title('PSNR Results', fontsize=16, weight='bold')
     # #ax[1][0].set_yticklabels(ax[1][0].get_yticklabels(), rotation=90)
-    # ax[0].tick_params(axis='x', rotation=30)
-    #
-    # # sns.heatmap(data=df_14_ssim[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
-    # #             annot=True, fmt=".3f", linewidths=.5, ax=ax[1], cmap='Reds')
-    # # ax[1].set_title('SSIM Results')
-    # # ax[1].tick_params(axis='x', rotation=30)
-    #
+    # ax[0].tick_params(axis='x', rotation=30, labelsize=12)
+    # ax[0].tick_params(axis='y', labelsize=12)
+
+    sns.heatmap(data=df_14_ssim[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
+                annot=True, fmt=".3f", linewidths=.5, ax=ax[1], cmap='Reds')
+    ax[1].set_title('SSIM Results', fontsize=16, weight='bold')
+    ax[1].tick_params(axis='x', rotation=30, labelsize=12)
+    ax[1].tick_params(axis='x', labelsize=12)
+
     # sns.heatmap(data=df_5_ssim[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
     #             annot=True, fmt=".3f", linewidths=.5, ax=ax[1], cmap='Reds')
-    # ax[1].set_title('SSIM Results')
-    # ax[1].tick_params(axis='x', rotation=30)
-    # # # f.tight_layout()
-    # plt.savefig(os.path.join(ROOT_DIR, 'Data', 'plots', 'Set5_hm.svg'), format='svg', dpi=1200)
-    # plt.show()
+    # ax[1].set_title('SSIM Results', fontsize=16, weight='bold')
+    # ax[1].tick_params(axis='x', rotation=30, labelsize=12)
+    # ax[1].tick_params(axis='y', labelsize=12)
+
+    plt.savefig(os.path.join(ROOT_DIR, 'Data', 'plots', 'Set14_hm.svg'), format='svg', dpi=1200)
+    plt.show()
 
     """
     ************ MSE Plots ********************************************************************************************
     """
-
-    sns.set_theme()
-    f, ax = plt.subplots(1, 1, figsize=(19.2, 10.8))
-    f.suptitle('Image Metric Heatmap Set14', fontsize=20)
-
-    sns.heatmap(data=df_14_mse[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
-                annot=True, fmt=".3f", linewidths=.5, ax=ax, cmap='Reds')
-    ax.set_title('MSE Results')
-    ax.tick_params(axis='x', rotation=30)
-
-    # sns.heatmap(data=df_5_mse[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
+    #
+    # sns.set_theme()
+    # f, ax = plt.subplots(1, 1, figsize=(19.2, 10.8))
+    # f.suptitle('Image Metric Heatmap Set14', fontsize=20, weight='bold', x=0.435)
+    #
+    # sns.heatmap(data=df_14_mse[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
     #             annot=True, fmt=".3f", linewidths=.5, ax=ax, cmap='Reds')
-    # ax.set_title('MSE Results')
-    # #ax[1][0].set_yticklabels(ax[1][0].get_yticklabels(), rotation=90)
-    # ax.tick_params(axis='x', rotation=30)
-
-
-    plt.savefig(os.path.join(ROOT_DIR, 'Data', 'plots', 'Set14_hm_mse.svg'), format='svg', dpi=1200)
-    plt.show()
+    # ax.set_title('MSE Results', fontsize=16, weight='bold')
+    # ax.tick_params(axis='x', rotation=30, labelsize=16)
+    # ax.tick_params(axis='y', labelsize=12)
+    #
+    # # sns.heatmap(data=df_5_mse[['Bi-linear', '16-8-1', '32-16-1', '64-32-1', '128-64-1', '256-128-1']],
+    # #             annot=True, fmt=".3f", linewidths=.5, ax=ax, cmap='Reds')
+    # # ax.set_title('MSE Results', fontsize=16, weight='bold')
+    # # ax.tick_params(axis='x', rotation=30, labelsize=16)
+    # # ax.tick_params(axis='y', labelsize=12)
+    #
+    #
+    # plt.savefig(os.path.join(ROOT_DIR, 'Data', 'plots', 'Set14_hm_mse.svg'), format='svg', dpi=1200)
+    # plt.show()
 

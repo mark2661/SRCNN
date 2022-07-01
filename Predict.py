@@ -65,82 +65,8 @@ def display_predicted_results(gt, deg, pre):
     plt.show()
 
 
-# def predict_srcnn(REFERENCE_IMAGE_PATH,
-#                   PRE_TRAINED_MODEL_WEIGHTS_PATH, filter_num, scale=3):
-#     """
-#     This function predicts a high resolution version of a ground truth image using an artificially
-#     degraded version of the ground truth image.
-#     :param REFERENCE_IMAGE_PATH: file path to the ground truth image
-#     :param PRE_TRAINED_MODEL_WEIGHTS_PATH: file path to the pre-trained SRCNN weights
-#     :param scale: up-scaling factor of the low res image
-#     :return: ground truth image (RBG format), Bi-linearly interpolated low res image (RBG format),
-#              SRCNN predicted hi-res image (RBG format)
-#     """
-#     device = 'cuda' if torch.cuda.is_available else 'cpu'
-#
-#     # Create a model instance and load in pre-trained weights
-#     model = Model.SRCNN(filter_num)
-#     state_dict = torch.load(PRE_TRAINED_MODEL_WEIGHTS_PATH)
-#     model.load_state_dict(state_dict)
-#
-#     # pass the model to the device
-#     model.to(device)
-#
-#     # switch model to evaluation mode
-#     model.eval()
-#
-#     # load the reference and degraded image
-#     ref = cv2.imread(REFERENCE_IMAGE_PATH)
-#     deg = artificially_degrade_image(ref, scale)
-#
-#     # resize the images so they divide wholly with the scale value
-#     ref = modcrop(ref, scale)
-#     deg = modcrop(deg, scale)
-#
-#     """"
-#     Create an input image for the SRCNN from the degraded image,
-#     convert to YCrCb (cv2.imread reads in as BGR by default)
-#     Extract the y-channel data (The SRCNN was trained on the Y channel only and only takes inputs with 1 colour channel)
-#     and normalise the pixel values.
-#     """
-#     # covert degraded image to YCrCb colour space
-#     deg_y_cr_cb_image = cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)
-#     deg_y_cr_cb_image_height, deg_y_cr_cb_image_width, _ = deg_y_cr_cb_image.shape
-#
-#     # create a zeros matrix to store the y channel data
-#     y_channel = np.zeros((deg_y_cr_cb_image_height, deg_y_cr_cb_image_width, 1), dtype=float)
-#     y_channel[:, :, 0] = deg_y_cr_cb_image[:, :, 0].astype(np.float32) / 255  # typecast and normalise pixel intensities
-#
-#     # Pass image to SRCNN to predict high-res version
-#     with torch.no_grad():
-#         # reshape the matrix from h X w X c format to c X h X w format
-#         y_channel = np.transpose(y_channel, (2, 0, 1))
-#         # covert np matrix to torch.float tensor and pass to device
-#         y_channel = torch.tensor(y_channel, dtype=torch.float).to(device)
-#         # add a fourth dimension which represents a batch size. b X c X h X w format
-#         y_channel = y_channel.unsqueeze(0)
-#         # .clamp will cap all pixel outputs outside of the 0 - 1 range
-#         predicted = model(y_channel).clamp(0.0, 1.0)
-#
-#     predicted = predicted.cpu().detach().numpy()
-#     # reshape to h X w X c format
-#     predicted = predicted.reshape(predicted.shape[2], predicted.shape[3], predicted.shape[1])
-#     # re-map pixel intensities to 0-255 range
-#     predicted = np.clip(predicted * 255., 0.0, 255.0).astype(np.uint8)
-#
-#     # merge predicted y channel with cr and cb channels and covert to RGB
-#     deg_y_cr_cb_image[:, :, 0] = predicted[:, :, 0]
-#     predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
-#     # predicted_image = predicted[:, :, 0]
-#
-#     return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted_image
-#     # r = shave(cv2.cvtColor(ref, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
-#     # d = shave(cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
-#     # p = shave(predicted_image, 3)
-#     # return r, d, p
-
 def predict_srcnn(REFERENCE_IMAGE_PATH,
-                  PRE_TRAINED_MODEL_WEIGHTS_PATH, filter_num, scale=3):
+                  PRE_TRAINED_MODEL_WEIGHTS_PATH, filter_num, scale=3, greyscale=False):
     """
     This function predicts a high resolution version of a ground truth image using an artificially
     degraded version of the ground truth image.
@@ -171,19 +97,19 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
     ref = modcrop(ref, scale)
     deg = modcrop(deg, scale)
 
-    """" 
+    """"
     Create an input image for the SRCNN from the degraded image,
-    convert to YCrCb (cv2.imread reads in as BGR by default) 
+    convert to YCrCb (cv2.imread reads in as BGR by default)
     Extract the y-channel data (The SRCNN was trained on the Y channel only and only takes inputs with 1 colour channel)
     and normalise the pixel values.
     """
     # covert degraded image to YCrCb colour space
-    deg_y_cr_cb_image = cv2.imread(REFERENCE_IMAGE_PATH, 0)
-    deg_y_cr_cb_image_height, deg_y_cr_cb_image_width = deg_y_cr_cb_image.shape
+    deg_y_cr_cb_image = cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)
+    deg_y_cr_cb_image_height, deg_y_cr_cb_image_width, _ = deg_y_cr_cb_image.shape
 
     # create a zeros matrix to store the y channel data
     y_channel = np.zeros((deg_y_cr_cb_image_height, deg_y_cr_cb_image_width, 1), dtype=float)
-    y_channel[:, :, 0] = deg_y_cr_cb_image.astype(np.float32) / 255  # typecast and normalise pixel intensities
+    y_channel[:, :, 0] = deg_y_cr_cb_image[:, :, 0].astype(np.float32) / 255  # typecast and normalise pixel intensities
 
     # Pass image to SRCNN to predict high-res version
     with torch.no_grad():
@@ -204,14 +130,18 @@ def predict_srcnn(REFERENCE_IMAGE_PATH,
 
     # merge predicted y channel with cr and cb channels and covert to RGB
     deg_y_cr_cb_image[:, :, 0] = predicted[:, :, 0]
-    #predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
+    predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
     # predicted_image = predicted[:, :, 0]
-
-    return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), deg_y_cr_cb_image[:, :, 0]
+    if greyscale:
+        return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted[:, :, 0]
+    else:
+        return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted_image
     # r = shave(cv2.cvtColor(ref, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
     # d = shave(cv2.cvtColor(deg, cv2.COLOR_BGR2YCrCb)[:, :, 0], 3)
     # p = shave(predicted_image, 3)
     # return r, d, p
+
+
 
 def main(test_set_path, model_weights_path, filter_num):
     # test_image_path = os.path.join(test_set_path, 'bird_GT.bmp')

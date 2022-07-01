@@ -207,9 +207,9 @@ if __name__ == '__main__':
             #                                             np.median(sorted(ssim_results)),
             #                                             np.median(sorted(mse_results)))]
             if network_filter_number in test_results.keys():
-                test_results[network_filter_number].append((np.median(psnr_results)),
+                test_results[network_filter_number].append((np.median(psnr_results),
                                                             np.median(ssim_results),
-                                                            np.median(mse_results))
+                                                            np.median(mse_results)))
             else:
                 test_results[network_filter_number] = [(np.median(psnr_results)),
                                                         np.median(ssim_results),
@@ -221,3 +221,44 @@ if __name__ == '__main__':
     df = pd.DataFrame.from_dict(test_results, orient='index', columns=['BSDS100', 'Set5', 'Set14', 'Urban100'])
     df.to_pickle(os.path.join(ROOT_DIR, 'Data', 'test_set_results_mse.pkl'))
     print(df)
+
+
+"""/
+************************************* Set 14 only **********************************************************************
+"""
+# for network in glob.glob(os.path.join(ROOT_DIR, 'outputs', '*')):
+#     network_filter_number = int(network.split('\\')[-1].split('_')[0])
+#     print(network_filter_number)
+#     for test_set_path in glob.glob(os.path.join(ROOT_DIR, 'testSets', 'Set14')):
+#         print(test_set_path)
+#         psnr_results = []
+#         ssim_results = []
+#         mse_results = []
+#         for model_state_dict in glob.glob(os.path.join(network, 'model*', 'model*.pth')):
+#             psnr_score, ssim_score, mse_score = main(test_set_path, model_state_dict, network_filter_number)
+#             psnr_results.append(psnr_score)
+#             ssim_results.append(ssim_score)
+#             mse_results.append(mse_score)
+#         # if network_filter_number in test_results.keys():
+#         #     test_results[network_filter_number].append((np.median(sorted(psnr_results)),
+#         #                                                 np.median(sorted(ssim_results)),
+#         #                                                 np.median(sorted(mse_results))))
+#         # else:
+#         #     test_results[network_filter_number] = [(np.median(sorted(psnr_results)),
+#         #                                             np.median(sorted(ssim_results)),
+#         #                                             np.median(sorted(mse_results)))]
+#         if network_filter_number in test_results.keys():
+#             test_results[network_filter_number].append((np.median(psnr_results),
+#                                                         np.median(ssim_results),
+#                                                         np.median(mse_results)))
+#         else:
+#             test_results[network_filter_number] = [(np.median(psnr_results)),
+#                                                     np.median(ssim_results),
+#                                                     np.median(mse_results)]
+#
+# with open('test_results_set14_fixed.pickle', 'wb') as f:
+#     pickle.dump(test_results, f)
+# print(test_results)
+#df = pd.DataFrame.from_dict(test_results, orient='index', columns=['Set14'])
+#df.to_pickle(os.path.join(ROOT_DIR, 'Data', 'test_set_results_mse.pkl'))
+#print(df)
