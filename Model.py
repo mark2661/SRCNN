@@ -5,6 +5,12 @@ class SRCNN(nn.Module):
     def __init__(self, first_layer_filter_num):
         """
         :param first_layer_filter_num: Number of filters in first layer
+        currently network is of the form:
+                                        first row = n filters
+                                        second row = n//2 filers
+                                        third layer = 1 filter
+        padding uses formula taken from https://www.sciencedirect.com/science/article/abs/pii/S0925231219312974
+        Kernel sizes follows model outlined in https://ieeexplore.ieee.org/abstract/document/7115171
         """
         super(SRCNN, self).__init__()
         self.first_layer_filter_num = first_layer_filter_num
