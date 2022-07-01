@@ -8,48 +8,23 @@ from matplotlib import pyplot as plt
 from utils import calculate_psnr, artificially_degrade_image, modcrop, calculate_mse
 from definitions import ROOT_DIR
 
-def display_predicted_results(gt, deg, pre):
-    # # display image subplots
-    # fig, axs = plt.subplots(1, 3, figsize=(20, 8))
-    # # axs[0].imshow(gt)
-    # axs[0].imshow(gt, cmap='gray', vmin=0, vmax=255)
-    # axs[0].set_title('Original Image\nPSNR: {:.2f}\nMSE: {:.2f}\nSSIM: {:.2f}'.format(calculate_psnr(gt, gt, 255.),
-    #                                                                                   calculate_mse(gt, gt),
-    #                                                                                   ssim(gt, gt, full=True)[0]))
-    #
-    # # axs[1].imshow(deg)
-    # axs[1].imshow(deg, cmap='gray', vmin=0, vmax=255)
-    # axs[1].set_title('Degraded Image\nPSNR: {:.2f}\nMSE: {:.2f}\nSSIM: {:.2f}'.format(calculate_psnr(gt, deg, 255.),
-    #                                                                                   calculate_mse(gt, deg),
-    #                                                                                   ssim(gt, deg, full=True)[0]))
-    #
-    # # axs[2].imshow(pre)
-    # axs[2].imshow(pre, cmap='gray', vmin=0, vmax=255)
-    # axs[2].set_title(
-    #     "SRCNN Predicted Image\nPSNR: {:.2f}\nMSE: {:.2f}\nSSIM: {:.2f}".format(calculate_psnr(gt, pre, 255.),
-    #                                                                             calculate_mse(gt, pre),
-    #                                                                             ssim(gt, pre, full=True)[0]))
-    #
-    # # remove axis ticks
-    # for ax in axs:
-    #     ax.set_xticks([])
-    #     ax.set_yticks([])
-    #
-    # plt.show()
 
+def display_predicted_results(gt, deg, pre):
+    """
+    Displays ground truth version, degraded version, and SRCNN predicted version of an image side by side
+    with MSE and SSIM metric scores
+    """
     # display image subplots
     fig, axs = plt.subplots(1, 3, figsize=(20, 8))
-    # axs[0].imshow(gt)
+    # ground truth image subplot
     axs[0].imshow(gt, cmap='gray', vmin=0, vmax=255)
     axs[0].set_title('Original Image\nPSNR: {:.2f}\nMSE: {:.2f}'.format(calculate_psnr(gt, gt, 255.),
                                                                         calculate_mse(gt, gt), ))
-
-    # axs[1].imshow(deg)
+    # degraded image (low res) subplot
     axs[1].imshow(deg, cmap='gray', vmin=0, vmax=255)
     axs[1].set_title('Degraded Image\nPSNR: {:.2f}\nMSE: {:.2f}'.format(calculate_psnr(gt, deg, 255.),
                                                                         calculate_mse(gt, deg), ))
-
-    # axs[2].imshow(pre)
+    # SRCNN predicted image subplot
     axs[2].imshow(pre, cmap='gray', vmin=0, vmax=255)
     axs[2].set_title(
         "SRCNN Predicted Image\nPSNR: {:.2f}\nMSE: {:.2f}".format(calculate_psnr(gt, pre, 255.),
@@ -133,7 +108,6 @@ def predict_srcnn(REFERENCE_IMAGE_PATH, scale=3, greyscale=False):
         return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted[:, :, 0]
     else:
         return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted_image
-
 
 
 def main(image_path):
