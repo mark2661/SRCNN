@@ -4,15 +4,13 @@ import time
 import Train
 import argparse
 import os
-import pickle
 import torch.nn as nn
 import torchvision.transforms as transforms
 import pandas as pd
 from torch.utils.data import DataLoader
 from Dataset import TrainingDataset, ValidationDataset
 from Model import SRCNN
-from utils import plot_training_results, save_results_plot
-from piq import ssim, SSIMLoss, MultiScaleSSIMLoss
+from utils import save_results_plot
 from pathlib import Path
 import sys
 
@@ -24,12 +22,6 @@ def main(training_data_path, validation_data_path, learning_rate,
 
     # set the training device
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-    # define a custom transform for the training dataset
-    transform = transforms.Compose([
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(90)
-    ])
 
     # create the training and validation dataset objects for the dataloader
     training_dataset = TrainingDataset(training_data_path)
@@ -55,10 +47,8 @@ def main(training_data_path, validation_data_path, learning_rate,
         {'params': model.l3.parameters(), 'lr': learning_rate * 0.1}
     ], lr=learning_rate)
 
+    # define loss function
     criterion = nn.MSELoss()
-    # criterion = nn.L1Loss()
-    # criterion = SSIMLoss(data_range=1.)
-    # criterion = MultiScaleSSIMLoss(kernel_size=3)
 
     # arrays to store statistics from each training loop
     train_loss, val_loss = [], []

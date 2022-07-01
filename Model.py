@@ -3,6 +3,9 @@ import torch.nn as nn
 
 class SRCNN(nn.Module):
     def __init__(self, first_layer_filter_num):
+        """
+        :param first_layer_filter_num: Number of filters in first layer
+        """
         super(SRCNN, self).__init__()
         self.first_layer_filter_num = first_layer_filter_num
         self.l1 = nn.Conv2d(1, self.first_layer_filter_num, kernel_size=9, padding=9 // 2)
