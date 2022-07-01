@@ -38,7 +38,7 @@ def display_predicted_results(gt, deg, pre):
     plt.show()
 
 
-def predict_srcnn(REFERENCE_IMAGE_PATH, scale=3, greyscale=False):
+def predict_srcnn(REFERENCE_IMAGE_PATH, scale=3):
     """
     This function predicts a high resolution version of a ground truth image using an artificially
     degraded version of the ground truth image.
@@ -104,10 +104,7 @@ def predict_srcnn(REFERENCE_IMAGE_PATH, scale=3, greyscale=False):
     deg_y_cr_cb_image[:, :, 0] = predicted[:, :, 0]
     predicted_image = cv2.cvtColor(deg_y_cr_cb_image, cv2.COLOR_YCrCb2RGB)
 
-    if greyscale:
-        return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted[:, :, 0]
-    else:
-        return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted_image
+    return cv2.cvtColor(ref, cv2.COLOR_BGR2RGB), cv2.cvtColor(deg, cv2.COLOR_BGR2RGB), predicted_image
 
 
 def main(image_path):
